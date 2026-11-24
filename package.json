@@ -1,0 +1,19 @@
+{
+  "name": "twtimes",
+  "private": true,
+  "version": "0.1.0",
+  "description": "今昔時空：台灣今昔立體街景，可即時切換時代、編輯街景、天氣日夜並在場景中拍照",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "fetch-osm": "node scripts/fetch-osm.mjs"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}
