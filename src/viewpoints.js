@@ -2,7 +2,7 @@
 export const VIEWPOINTS = [
   { key: 'station', place: '臺中驛前', title: '臺中驛（車站舊站）', lon: 120.68526, lat: 24.13691, eye: { lon: 120.68420, lat: 24.13760, h: 45 }, targetY: 8 },
   { key: 'newstation', place: '臺中車站', title: '高架新站', lon: 120.68673, lat: 24.13736, eye: { lon: 120.68560, lat: 24.13880, h: 60 }, targetY: 12 },
-  { key: 'miyahara', place: '綠川町', title: '宮原眼科', lon: 120.68372, lat: 24.13765, eye: { lon: 120.68330, lat: 24.13720, h: 30 } },
+  { key: 'miyahara', place: '綠川町', title: '宮原眼科', lon: 120.68355, lat: 24.13782, eye: { lon: 120.68296, lat: 24.13752, h: 12 }, targetY: 6 },
   { key: 'green', place: '綠川', title: '綠川', lon: 120.68330, lat: 24.13840, eye: { lon: 120.68280, lat: 24.13700, h: 25 }, targetY: 0 },
   { key: 'zhongshan', place: '新盛橋通（中山路）', title: '中山路', lon: 120.68230, lat: 24.13880, eye: { lon: 120.68360, lat: 24.13760, h: 30 }, targetY: 4 },
   { key: 'prefecture', place: '臺中州廳', title: '臺中州廳', lon: 120.67833, lat: 24.13853, eye: { lon: 120.67980, lat: 24.13780, h: 50 } },

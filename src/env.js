@@ -82,7 +82,7 @@ export class Environment {
     for (const m of this.nightMaterials) m.emissiveIntensity = dusk * (m.userData.nightBoost || 1) * 0.55;
     for (const m of this.glowMaterials || []) m.opacity = this.night * 0.85;
     for (const m of this.wetMaterials) { m.roughness = w.rain ? 0.25 : 0.95; m.color.setScalar(w.rain ? 0.7 : 1); }
-    for (const m of this.waterMaterials) m.roughness = w.rain ? 0.3 : 0.06;
+    for (const m of this.waterMaterials) m.roughness = w.rain ? 0.35 : 0.2;
   }
   updateEnvMap() {
     clearTimeout(this._envT);

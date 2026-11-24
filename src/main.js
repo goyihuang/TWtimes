@@ -4,12 +4,15 @@ import { loadBase } from './data.js';
 import { ERAS, ERA_ORDER, LANDMARKS } from './eras.js';
 import { facadeLibrary, groundTextures, signAtlas } from './textures.js';
 import { buildBuildings, buildSigns, indexLandmarks, GROUND_FLOOR_H, FLOOR_H } from './builders/buildings.js';
-import { buildGround } from './builders/ground.js';
+import { buildGround, roadWidth } from './builders/ground.js';
+import { buildStation } from './builders/station.js';
+import { buildRiver } from './builders/river.js';
+import { buildMiyahara } from './builders/miyahara.js';
 import { Environment } from './env.js';
 import { Pipeline } from './render.js';
 import { CameraRig } from './controls.js';
 import { Edits, sceneStore } from './edits.js';
-import { lonLatToXZ } from './geo.js';
+import { lonLatToXZ, polygonArea, centroid, pointInPolygon } from './geo.js';
 import { VIEWPOINTS } from './viewpoints.js';
 import { buildUI } from './ui.js';
 import { generateInfill } from './infill.js';
@@ -42,6 +45,7 @@ class App {
   async init() {
     this.setStatus('載入街道資料…');
     this.base = await loadBase(new URL('data/taichung-station.osm.json', document.baseURI).href);
+    this.addLandmarkFootprints();
     this.osmBuildings = this.base.buildings;
     this.refreshInfill();
     this.setStatus('繪製街屋立面…');
@@ -54,6 +58,15 @@ class App {
     this.applyHash();
     this.setStatus(null);
     this.renderer.setAnimationLoop(() => this.frame());
+  }
+  // 自訂輪廓的地標（OSM 缺漏者）：加入建物清單，並移除輪廓內零碎的 OSM 小建物
+  addLandmarkFootprints() {
+    for (const lm of LANDMARKS) {
+      if (!lm.footprint) continue;
+      const ring = lm.footprint.map(p => lonLatToXZ(...p)); if (polygonArea(ring) < 0) ring.reverse();
+      this.base.buildings = this.base.buildings.filter(b => { const [cx, cz] = centroid(b.ring); return !pointInPolygon(cx, cz, ring); });
+      this.base.buildings.push({ id: 'lm-' + lm.key, tags: { name: lm.label?.today || lm.key }, ring, area: Math.abs(polygonArea(ring)) });
+    }
   }
   // 推估補建的街屋會依街道寬度重新排列（街道加寬，街屋就往後退）
   refreshInfill() {
@@ -77,7 +90,11 @@ class App {
     const group = new THREE.Group(); group.name = 'era-' + id;
     const b = buildBuildings(this.base, era, this.edits.data, this.library, this.landmarkIndex);
     const existing = b.index.filter(x => !x.hidden).map(x => x.b);
-    group.add(b.group, buildSigns(b.signs, this.atlas), buildGround(this.base, era, this.edits.data, this.ground, existing));
+    group.add(b.group, buildSigns(b.signs, this.atlas), buildGround(this.base, era, this.edits.data, this.ground, existing), buildRiver(this.base, era, { roads: this.base.roads.filter(r => era.roadIncluded(r) && !/^(steps|elevator|busway)$/.test(r.tags.highway) && !(+r.tags.layer > 0 && r.tags.bridge !== 'yes') && !(+r.tags.layer < 0)), width: r => roadWidth(r, this.edits.global.streetWidth || 1) }));
+    for (const c of b.custom) { // 專屬模型地標
+      if (c.custom === 'station') { const m = buildStation(c.b.ring, lonLatToXZ(...c.lm.front)); c.height = m.userData.height - 8; b.group.add(m); }
+      if (c.custom === 'miyahara') { const m = buildMiyahara(c.b.ring, lonLatToXZ(...c.lm.corner), era); c.height = m.userData.height - 4; b.group.add(m); }
+    }
     const layer = ERA_LAYER[id]; group.traverse(o => o.layers.set(layer));
     this.scene.add(group);
     this.eraGroups[id] = { group, buildings: b };
@@ -134,7 +151,7 @@ class App {
     const hit = ray.intersectObjects(objs, false)[0];
     return hit ? hit.distance : 200;
   }
-  heightOf(entry) { return GROUND_FLOOR_H + (entry.levels - 1) * FLOOR_H; }
+  heightOf(entry) { if (entry.height) return entry.height; return GROUND_FLOOR_H + (entry.levels - 1) * FLOOR_H; }
   // 拍照：用較高解析度重畫一張，加上地點與年代戳記
   async capture({ compare = false } = {}) {
     const r = this.renderer; const w = innerWidth, h = innerHeight; const pr0 = r.getPixelRatio();

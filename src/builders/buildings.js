@@ -7,7 +7,7 @@ export const FLOOR_H = 3.2;
 
 // 把一個時代的建物全部合併成少數幾個 Mesh（每種材質一個），手機也跑得動。
 // 每個三角形記錄它屬於哪一棟，點選編輯時用來反查。
-class Acc {
+export class Acc {
   constructor() { this.pos = []; this.nor = []; this.uv = []; this.owner = []; }
   tri(a, b, c, ua, ub, uc, owner) {
     const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
@@ -29,7 +29,7 @@ class Acc {
   }
 }
 
-function walls(acc, ring, y0, y1, vOrigin, tileW, tileH, owner) {
+export function walls(acc, ring, y0, y1, vOrigin, tileW, tileH, owner) {
   let u = 0;
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i], b = ring[(i + 1) % ring.length];
@@ -39,7 +39,7 @@ function walls(acc, ring, y0, y1, vOrigin, tileW, tileH, owner) {
     acc.quad([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]], owner);
   }
 }
-function cap(acc, ring, y, owner, scale = 8) {
+export function cap(acc, ring, y, owner, scale = 8) {
   const contour = ring.map(p => new THREE.Vector2(p[0], p[1]));
   let faces; try { faces = THREE.ShapeUtils.triangulateShape(contour, []); } catch { return; }
   for (const [i, j, k] of faces) {
@@ -69,8 +69,12 @@ export function buildBuildings(base, era, edits, library, landmarkIndex) {
   const index = []; const signs = [];
   const fd = edits.global.floorsDelta; const floorsDelta = (typeof fd === 'number' ? fd : fd?.[era.id]) || 0;
   const eraEdits = edits.eras[era.id]?.buildings || {};
+  // 有專屬模型的地標（如臺中驛）：其輪廓內的其他 OSM 小建物（附屬、雨棚）不重複畫
+  const customRings = base.buildings.filter(b => landmarkIndex.get(b.id)?.custom).map(b => b.ring);
+  const custom = [];
   for (const b of base.buildings) {
     const lm = landmarkIndex.get(b.id) || null;
+    if (!lm && customRings.some(r => { const [cx, cz] = centroid(b.ring); return pointInPolygon(cx, cz, r); })) continue;
     const spec = era.building(b, lm);
     if (!spec) continue;
     const ed = eraEdits[b.id] || {};
@@ -78,6 +82,7 @@ export function buildBuildings(base, era, edits, library, landmarkIndex) {
     const keep = lm || b.tags.historic; // 古蹟不套用全域樓層增減
     let levels = ed.levels ?? Math.max(1, Math.round(spec.levels + (keep ? 0 : floorsDelta)));
     if (ed.style && library[ed.style]) spec.style = ed.style;
+    if (spec.custom) { index.push({ b, spec, lm, levels, custom: spec.custom }); custom.push(index[index.length - 1]); continue; }
     const owner = index.length;
     index.push({ b, spec, lm, levels });
     const style = library[spec.style] ? spec.style : 'modernTile';
@@ -114,7 +119,7 @@ export function buildBuildings(base, era, edits, library, landmarkIndex) {
     mesh.userData.pickable = true;
     group.add(mesh); meshes.push(mesh);
   }
-  return { group, index, meshes, signs };
+  return { group, index, meshes, signs, custom };
 }
 
 function towerSpot(ring) { // 塔放在最長那一邊的中點內側（通常是正立面）
@@ -162,7 +167,8 @@ export function indexLandmarks(base, landmarks, lonLatToXZ) {
   const map = new Map(); const found = {};
   for (const lm of landmarks) {
     let hit = null;
-    if (lm.osmName) hit = base.buildings.filter(b => b.tags.name === lm.osmName).sort((a, b) => b.area - a.area)[0];
+    if (lm.footprint) hit = base.buildings.find(b => b.id === 'lm-' + lm.key);
+    else if (lm.osmName) hit = base.buildings.filter(b => b.tags.name === lm.osmName).sort((a, b) => b.area - a.area)[0];
     else if (lm.lon) { const [x, z] = lonLatToXZ(lm.lon, lm.lat); hit = base.buildings.filter(b => !b.infill && pointInPolygon(x, z, b.ring)).sort((a, b) => a.area - b.area)[0]; }
     if (hit) { map.set(hit.id, lm); found[lm.key] = hit; }
   }
