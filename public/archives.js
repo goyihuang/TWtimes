@@ -57,5 +57,13 @@ window.ARCHIVES = [
     source:'https://tcmb.culture.tw/zh-tw/detail?id=144000003224&indexCode=MOCCOLLECTIONS',sourceLabel:'臺北市立文獻館 · 舊站原照',
     more:'https://travel.taipei/zh-tw/news/details/27418',moreLabel:'臺北市政府 · 歷代站房沿革',
     localReference:'參照「今昔／台北」的 1975 年站前及新舊站房對照影像。舊站位置以館前路軸線定位，進深、噴水池及周邊街屋依影像推估。'
+  },
+  {
+    id:'kaohsiung',title:'從中山路望向高雄驛',era:'1940 年代／當代',
+    description:'從站前廣場看，正面時鐘位在帝冠屋頂下方，寬雨庇通往候車大廳。昔日站房向兩側延伸，月臺和鐵軌都在地面。如今老站房坐落在南側入口，後方可見綠色天棚和商辦、旅館兩棟大樓。',
+    image:'scene-kaohsiung.jpg',credit:'本站三維場景取景。',license:'',
+    source:'https://takao.kcg.gov.tw/article/3529',sourceLabel:'高雄市政府 · 新舊站對照與現場照片',
+    more:'https://www.mecanoo.nl/Projects/project/170/Kaohsiung-Station',moreLabel:'Mecanoo · 車站建築設計',
+    localReference:'參照今昔收藏中 1941、1948 年站前照片與 2025 年空拍影像。天棚、雙塔及保留站房依現代圖資定位。屋高、歷史月臺配置與周邊街屋為影像推估。'
   }
 ];

@@ -5,7 +5,7 @@ window.makePedestrians = function makePedestrians(T, modern, city) {
   const group = new T.Group();
   group.name = modern ? '當代街上行人' : '舊城街上行人';
   group.userData.isPedestrianCrowd = true;
-  const actors = [], routesByArea = city==='taipei'?[[]]:city==='changhua'?[[],[]]:[[],[],[]];
+  const actors = [], routesByArea = (city==='taipei'||city==='kaohsiung')?[[]]:city==='changhua'?[[],[]]:[[],[],[]];
   let seed = modern ? 1031 : 932;
   const rnd = () => ((seed = (Math.imul(seed,1664525)+1013904223) >>> 0) / 4294967296);
   const choose = a => a[Math.floor(rnd()*a.length)];
@@ -29,7 +29,9 @@ window.makePedestrians = function makePedestrians(T, modern, city) {
   }
   // The near forecourt lies ahead of the rickshaw rank. The far traverse follows
   // the mapped station footpath. The short diagonal brings walkers into the foreground.
-  if(city==='taipei'){
+  if(city==='kaohsiung'){
+    route(0,[-16,22],[15,23],modern?6:4);route(0,[-6,42],[4,27],3);waiting(0,-4.3,16,2.7);
+  }else if(city==='taipei'){
     if(modern){route(0,[-53,60],[39,77],8);route(0,[-92,42],[-100,75],4)}
     else{route(0,[-236,38],[-180,45],6);route(0,[-196,61],[-179,64],3)}
   }else if(city==='changhua'){

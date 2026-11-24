@@ -8,7 +8,8 @@
     ['674739984','654380124','654380125'],
     ['529613782','529613783','529613748'],
     ['533104107','533104108','533104109'],
-    ['495593094','495593095','384799251']
+    ['495593094','495593095','384799251'],
+    ['606471723','606471722','606471721']
   ];
   const styles = ['brick','tile','plaster'];
   const tones = {
@@ -207,7 +208,7 @@
     placeChanged(){if(active)selectShop(curated[index][0],true)},
     eraChanged(){if(active&&selected)selectShop(selected,false)},
     beforeEra:flush,
-    light:()=>tones[time].offset,
+    light:()=>time==='day'&&cityOf(index)==='kaohsiung'?[-78,135,100]:tones[time].offset,
     photoName:()=>active&&selected?streetName(book().get(selected)):null,
     hasEdits:()=>Object.keys(local).some(k=>k.startsWith(modern?'now/':'old/')),
     active:()=>active
