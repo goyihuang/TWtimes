@@ -52,3 +52,20 @@ src/ui.js                介面
 - 街道與建物：© OpenStreetMap contributors，ODbL 授權。
 - 1935 年街景為依史料與舊照規則化的**重建示意**，不是精確史實。
 - 本專案不內嵌任何來源不明的舊照片。
+
+## 地標 3D 模型（Blender）
+
+重要地標用 Blender 依照片建模，匯出 GLB 放在 `public/models/`，再在 `src/eras.js` 的地標加上 `model`：
+
+```js
+model: { all: { url: 'models/station1917.glb', native: true } }   // 或 { today: ..., '1935': ... } 依時代
+```
+
+`native: true` 表示模型以公尺建模、原點在 OSM 輪廓外接矩形中心、長邊沿 x、正面朝 Blender +y。
+模型載入失敗時，會退回程式產生的版本。重建模型：
+
+```bash
+pip install bpy
+python3 tools/blender/station1917.py   # 臺中驛（1917）
+python3 tools/blender/station2016.py   # 臺中車站（2016 高架新站）
+```

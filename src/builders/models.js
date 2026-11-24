@@ -20,13 +20,18 @@ export function fitModel(src, ring, frontPoint, opt = {}) {
   inner.updateMatrixWorld(true);
   const bb = new THREE.Box3().setFromObject(inner); const size = bb.getSize(new THREE.Vector3());
   const box = orientedBox(ring);
-  const longModel = Math.max(size.x, size.z);
-  const s = opt.height ? opt.height / size.y : box.L / longModel;
-  if (size.z > size.x) inner.rotation.y += Math.PI / 2;
-  inner.scale.setScalar(s);
-  inner.updateMatrixWorld(true);
-  const bb2 = new THREE.Box3().setFromObject(inner); const c = bb2.getCenter(new THREE.Vector3());
-  inner.position.set(-c.x, -bb2.min.y, -c.z);
+  let bb2;
+  if (opt.native) { // 模型本身以公尺建模、原點在輪廓中心、長邊沿 x：不縮放不置中
+    bb2 = bb;
+  } else {
+    const longModel = Math.max(size.x, size.z);
+    const s = opt.height ? opt.height / size.y : box.L / longModel;
+    if (size.z > size.x) inner.rotation.y += Math.PI / 2;
+    inner.scale.setScalar(s);
+    inner.updateMatrixWorld(true);
+    bb2 = new THREE.Box3().setFromObject(inner); const c = bb2.getCenter(new THREE.Vector3());
+    inner.position.set(-c.x, -bb2.min.y, -c.z);
+  }
   let rot = -box.ang;
   const toFront = new THREE.Vector2(frontPoint[0] - box.cx, frontPoint[1] - box.cz);
   if (toFront.dot(new THREE.Vector2(Math.sin(box.ang), -Math.cos(box.ang))) < 0) rot += Math.PI;
