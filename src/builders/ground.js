@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { hash01, pointInPolygon } from '../geo.js';
+import { carve, riverMask } from './river.js';
 
 const ROAD_W = { trunk: 26, primary: 22, secondary: 16, tertiary: 12, unclassified: 8, residential: 8, living_street: 6, service: 5, busway: 7, pedestrian: 6, footway: 2.5, path: 2, cycleway: 2.5, steps: 2.5, secondary_link: 8, tertiary_link: 7 };
 const MAJOR = new Set(['trunk', 'primary', 'secondary', 'tertiary']);
@@ -66,10 +67,13 @@ function flatPolys(rings, y, mat, uvScale = 10) {
   g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat); m.receiveShadow = true; return m;
 }
-const std = (map, o = {}) => new THREE.MeshStandardMaterial({ map, roughness: 0.95, ...o });
+let MASK = null;
+// 所有地面材質都在河道處挖空，露出下凹的河道（橋面除外）
+const std = (map, o = {}) => { const m = new THREE.MeshStandardMaterial({ map, roughness: 0.95, ...o }); return MASK ? carve(m, MASK) : m; };
 
 export function buildGround(base, era, edits, tex, existing) {
   const group = new THREE.Group(); group.name = 'ground';
+  MASK = riverMask(base);
   const old = era.road.surface === 'dirt';
   const scale = edits.global.streetWidth || 1;
   const roads = base.roads.filter(r => era.roadIncluded(r));
@@ -97,8 +101,8 @@ export function buildGround(base, era, edits, tex, existing) {
   const side = new Ribbon(), road = new Ribbon(), minor = new Ribbon(), mark = new Ribbon(), bridge = new Ribbon();
   for (const r of roads) {
     const w = roadWidth(r, scale); const hw = r.tags.highway;
+    if (r.tags.bridge === 'yes') { bridge.add(r.line, w + (w < 4 ? 0.5 : 1.5), 0.32, 8); continue; }
     if (['footway', 'path', 'steps', 'cycleway'].includes(hw)) { minor.add(r.line, w, 0.022, 4); continue; }
-    if (r.tags.bridge === 'yes') { bridge.add(r.line, w + 1.5, 0.32, 8); continue; }
     if (WITH_SIDEWALK.has(hw)) side.add(r.line, w + 6, 0.012, 4);
     road.add(r.line, w, MAJOR.has(hw) ? 0.034 : 0.03, 12);
     if (era.road.markings && MAJOR.has(hw) && w >= 10) mark.add(r.line, 0.25, 0.045, 8);
@@ -108,19 +112,8 @@ export function buildGround(base, era, edits, tex, existing) {
   group.add(side.mesh(std(old ? tex.earth : tex.tile)));
   group.add(road.mesh(roadMat));
   group.add(minor.mesh(std(old ? tex.earth : tex.tile, { color: old ? 0xffffff : 0xdddddd })));
-  group.add(bridge.mesh(std(old ? tex.dirt : tex.asphalt, { color: 0xcccccc })));
+  { const bm = MASK; MASK = null; group.add(bridge.mesh(std(old ? tex.dirt : tex.asphalt, { color: 0xcccccc }))); MASK = bm; }
   if (era.road.markings) { const mm = new THREE.MeshBasicMaterial({ map: tex.markings, transparent: true, alphaTest: 0.3, depthWrite: false }); group.add(mark.mesh(mm, { shadow: false })); }
-
-  // 河川：綠川、柳川
-  const water = new Ribbon(), bank = new Ribbon();
-  for (const w of base.waterways) {
-    const width = parseFloat(w.tags.width) || (w.tags.name === '柳川' ? 11 : 10);
-    water.add(w.line, width, 0.025, 10);
-    bank.add(offsetLine(w.line, width / 2 + 0.7), 1.4, 0.4, 2);
-    bank.add(offsetLine(w.line, -width / 2 - 0.7), 1.4, 0.4, 2);
-  }
-  group.add(water.mesh(waterMat, { shadow: true }));
-  group.add(bank.mesh(old ? grassMat : std(tex.ground, { color: 0xb5b0a5 })));
 
   // 鐵道
   const deck = new Ribbon(), ballastHi = new Ribbon(), ballastLo = new Ribbon(), green = new Ribbon(), greenPath = new Ribbon();
@@ -174,9 +167,6 @@ function buildTrees(base, era, roads, scale, existing) {
       }
     }
   }
-  for (const w of base.waterways) { // 河岸樹（1935 為垂柳意象）
-    for (const side of [-1, 1]) { const line = offsetLine(w.line, side * 7.5); for (let i = 1; i < line.length; i++) { const a = line[i - 1], b = line[i]; const l = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let s = 0; s < l; s += 11) spots.push([a[0] + (b[0] - a[0]) * s / l, a[1] + (b[1] - a[1]) * s / l, era.id === '1935' ? 1.2 : 0.9]); } }
-  }
   for (const a of base.areas) {
     if (a.kind !== 'park') continue;
     let minx = 1e9, minz = 1e9, maxx = -1e9, maxz = -1e9; for (const p of a.ring) { minx = Math.min(minx, p[0]); maxx = Math.max(maxx, p[0]); minz = Math.min(minz, p[1]); maxz = Math.max(maxz, p[1]); }
@@ -201,7 +191,7 @@ function buildTrees(base, era, roads, scale, existing) {
 function inWater(x, z, base) {
   for (const w of base.waterways) for (let i = 1; i < w.line.length; i++) {
     const a = w.line[i - 1], b = w.line[i]; const dx = b[0] - a[0], dz = b[1] - a[1]; const l2 = dx * dx + dz * dz || 1;
-    const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / l2)); if (Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) < 6) return true;
+    const t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / l2)); if (Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t) < 8) return true;
   }
   return false;
 }
