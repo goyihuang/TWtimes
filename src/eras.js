@@ -12,7 +12,7 @@ export function yearOf(tags) {
 // 地標：用名稱或座標辨識 OSM 建物，給予特定年代與風格。
 // lon/lat 用來找沒有名稱的建物（例如宮原眼科）。
 export const LANDMARKS = [
-  { key: 'station1917', osmName: '臺中驛', custom: 'station', front: [120.68420, 24.13760], built: 1917, style: 'tatsuno', levels: 2, roof: 'hip', tower: { h: 9, w: 7 },
+  { key: 'station1917', osmName: '臺中驛', custom: 'station', front: [120.68420, 24.13760], model: { all: { url: 'models/station1917.glb', native: true } }, built: 1917, style: 'tatsuno', levels: 2, roof: 'hip', tower: { h: 9, w: 7 },
     label: { '1935': '臺中驛（1917）', today: '臺中車站舊站（1917 古蹟）' } },
   { key: 'prefecture', osmName: '臺中州廳', built: 1913, style: 'govt', roof: 'mansard',
     label: { '1935': '臺中州廳', today: '臺中州廳（古蹟）' } },
@@ -28,7 +28,7 @@ export const LANDMARKS = [
   { key: 'pavilion', osmName: '湖心亭', built: 1908, style: 'pavilion', levels: 1, roof: 'hip',
     label: { '1935': '臺中公園 池亭（湖心亭）', today: '臺中公園 湖心亭' } },
   { key: 'exam', osmName: '臺灣府儒考棚', built: 1889, style: 'qing', levels: 1, roof: 'hip' },
-  { key: 'station2016', osmName: '臺中車站', built: 2016, style: 'glass', label: { today: '臺中車站（2016 高架新站）' } },
+  { key: 'station2016', osmName: '臺中車站', custom: 'model', front: [120.68560, 24.13880], model: { today: { url: 'models/station2016.glb', native: true } }, built: 2016, style: 'glass', label: { today: '臺中車站（2016 高架新站）' } },
 ];
 
 const SHOP_1935 = ['shophouse1935a', 'shophouse1935b', 'shophouse1935c', 'brick'];

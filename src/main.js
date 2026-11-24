@@ -8,6 +8,7 @@ import { buildGround, roadWidth } from './builders/ground.js';
 import { buildStation } from './builders/station.js';
 import { buildRiver } from './builders/river.js';
 import { buildMiyahara } from './builders/miyahara.js';
+import { loadModel, fitModel } from './builders/models.js';
 import { Environment } from './env.js';
 import { Pipeline } from './render.js';
 import { CameraRig } from './controls.js';
@@ -92,6 +93,8 @@ class App {
     const existing = b.index.filter(x => !x.hidden).map(x => x.b);
     group.add(b.group, buildSigns(b.signs, this.atlas), buildGround(this.base, era, this.edits.data, this.ground, existing), buildRiver(this.base, era, { roads: this.base.roads.filter(r => era.roadIncluded(r) && !/^(steps|elevator|busway)$/.test(r.tags.highway) && !(+r.tags.layer > 0 && r.tags.bridge !== 'yes') && !(+r.tags.layer < 0)), width: r => roadWidth(r, this.edits.global.streetWidth || 1) }));
     for (const c of b.custom) { // 專屬模型地標
+      const model = c.lm.model?.[id] || c.lm.model?.all;
+      if (model) { this.placeModel(id, group, b.group, c, model); continue; }
       if (c.custom === 'station') { const m = buildStation(c.b.ring, lonLatToXZ(...c.lm.front)); c.height = m.userData.height - 8; b.group.add(m); }
       if (c.custom === 'miyahara') { const m = buildMiyahara(c.b.ring, lonLatToXZ(...c.lm.corner), era); c.height = m.userData.height - 4; b.group.add(m); }
     }
@@ -99,6 +102,20 @@ class App {
     this.scene.add(group);
     this.eraGroups[id] = { group, buildings: b };
     this.env.clearMaterials(); for (const g of Object.values(this.eraGroups)) this.env.registerMaterials(g.group);
+  }
+  // 載入地標 glTF 模型；失敗就退回程式模型
+  placeModel(id, group, target, c, model) {
+    const front = lonLatToXZ(...(model.front || c.lm.front || c.lm.corner || [c.lm.lon, c.lm.lat]));
+    loadModel(model.url).then(src => {
+      if (this.eraGroups[id]?.group !== group) return; // 已重建
+      const m = fitModel(src, c.b.ring, front, model); c.height = m.userData.height;
+      m.traverse(o => o.layers.set(ERA_LAYER[id])); target.add(m);
+      this.env.registerMaterials(m);
+    }).catch(err => {
+      console.warn('地標模型載入失敗，改用程式模型', model.url, err);
+      const fallback = c.custom === 'station' ? buildStation(c.b.ring, lonLatToXZ(...c.lm.front)) : c.custom === 'miyahara' ? buildMiyahara(c.b.ring, lonLatToXZ(...c.lm.corner), ERAS[id]) : null;
+      if (fallback) { fallback.traverse(o => o.layers.set(ERA_LAYER[id])); target.add(fallback); this.env.registerMaterials(fallback); }
+    });
   }
   scheduleRebuild(scope) {
     clearTimeout(this._rb);
