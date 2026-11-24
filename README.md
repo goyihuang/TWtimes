@@ -1,5 +1,11 @@
 # 今昔時空 TWtimes
 
+[進入臺灣街景觀測所](https://goyihuang.github.io/TWtimes/)可探索臺中、彰化、臺北共六處街景，切換今昔並攝影。也可直接開啟[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)。
+
+## 臺中驛前 1935・天氣與日夜版
+
+[進入臺中驛前](https://goyihuang.github.io/TWtimes/taichung-1935.html)可體驗下列功能。
+
 在瀏覽器裡漫步臺灣街區，**即時切換 1935 年與現今**的立體街景，可以調整時間、天氣，修改街景（樓層、街寬、外觀），並在場景中拍照。
 
 第一個街區：**臺中驛前**（臺中車站、綠川、中山路／新盛橋通、宮原眼科、臺中州廳、第二市場、臺中公園）。
