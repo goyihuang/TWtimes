@@ -5,7 +5,7 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 1500,
     rolldownOptions: {
-      input: ['index.html', 'taichung-1935.html'],
+      input: ['index.html', 'taichung-1935.html', 'yuanshan.html'],
     },
   },
 });
