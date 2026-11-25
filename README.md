@@ -2,6 +2,22 @@
 
 [進入臺灣街景觀測所](https://goyihuang.github.io/TWtimes/)可探索臺中、彰化、臺北、高雄共七處街景，切換今昔並攝影。也可直接開啟[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)與[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)。
 
+## 圓山・劍潭　四時代（臺灣八景）
+
+[進入圓山・劍潭](https://goyihuang.github.io/TWtimes/yuanshan.html)（或 `?place=yuanshan`）：臺灣神社與明治橋、基隆河、劍潭山的四個時代。
+
+| 時代 | 場景 |
+| --- | --- |
+| 1901–1933 | 臺灣神社（神明造社殿、鳥居、石燈籠參道）＋第一代鋼桁架明治橋 |
+| 1933–1945 | 神社極盛、後山臺灣神宮、護國神社＋第二代鋼筋混凝土拱橋（宮燈塔柱） |
+| 1950–1960 年代 | 臺灣大飯店中式樓閣、泳池網球場、牌樓＋中山橋、再春游泳池、兒童樂園 |
+| 今 | 宮殿式圓山大飯店、忠烈祠、高架與捷運；中山橋已拆除（可開「舊橋殘影」） |
+
+- 時間軸切換時，建築以金色光邊溶解浮現、樹木與街屋逐棵長出，地表與調色同步過渡（1901 手彩繪葉書、1933 膠彩畫意、1960 年代柯達克羅姆、今日當代）。
+- 時刻 0–24 時（太陽軌跡、晨霧、夜間燈籠與光池、螢火蟲、星空）、晴／雲／雨／霧、六個鏡位、膠彩筆觸濾鏡、拍照下載。
+- 網址參數：`era=1..4`、`t=時刻`、`w=clear|cloudy|rain|fog`、`shot=1..6`、`paint=1`、`ui=0`、`q=low`。
+- 程式在 `src/yuanshan/`：`geo.js` 河道與地形骨架、`terrain.js` 地形與各時代地表、`forest.js` 樹林、`landmarks.js` 社殿與飯店、`bridges.js` 兩代橋、`atmosphere.js` 天空光影天氣、`post.js` 調色後製、`eras.js` 時代敘事與鏡位。
+
 ## 臺中驛前 1935・天氣與日夜版
 
 [進入臺中驛前](https://goyihuang.github.io/TWtimes/taichung-1935.html)可體驗下列功能。
