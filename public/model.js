@@ -165,11 +165,11 @@ window.buildDistrict=function(modern,geo=window.GEODATA){
    for(const p of geo.plazas)cap(p,.063,mat('#b9bab2'));
  }
  if(geo===window.GEODATA){
- if(window.makeStation){let s=window.makeStation(T,modern);s.position.set(...[66.7,.12,209.2]);s.rotation.y=-2.73;group.add(s);group.add(window.stationForecourt(T,modern))}
+ if(window.makeStation){let s=window.makeStation(T,modern);s.position.set(...[66.7,.12,209.2]);s.rotation.y=-2.73;group.add(s);group.userData.stationObject=s;if(!modern)s.add(buildTaichuArcade(T));group.add(window.stationForecourt(T,modern))}
  // Tree groups and period lighting on the edges of the station forecourt.
  if(modern){for(const [x,z] of STATION_PRECINCT.trees)tree(x,z,.85+rng()*.48)}
  else for(let i=0;i<10;i++){let u=i<5?-1:1,n=i%5;tree(66.7+u*(33+n*3)-n*3,178+u*(-14)-n*4,.7+n*.06)}
- if(!modern)for(let i=-2;i<=2;i++){let x=59+i*12,z=184-i*5;inst('trunk','#676d59',x,2.25,z,.12,4.5,.12);inst('leaf','#eadab2',x,4.7,z,.47,.64,.47)}
+ if(!modern)for(let i=-2;i<=2;i++){let x=59+i*12,z=184-i*5;inst('trunk','#676d59',x,2.25,z,.12,4.5,.12);inst('leaf','#eadab2',x,4.59,z,.20,.29,.20)}
  }
  for(const rail of geo===window.GEODATA?geo.rails:[]){if(rail.type==='disused'||['442234245','442234246','574701710','581277606','653778289'].includes(rail.id))continue;strip(rail.points,1.55,.061,mat(modern?'#a5a496':'#948e78'))}
  for(let [m,b] of bucket){let g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(b.pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(b.uv,2));g.computeVertexNormals();let mesh=new T.Mesh(g,m);track(mesh,b.ranges,false);mesh.receiveShadow=true;mesh.castShadow=m.map!==null||!([roads,curb,path].includes(m));group.add(mesh)}

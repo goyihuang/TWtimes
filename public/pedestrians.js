@@ -45,6 +45,7 @@ window.makePedestrians = function makePedestrians(T, modern, city) {
   route(0,[39.8,191.4],[88.5,170.9],modern?5:3);
   route(0,[51.5,183.2],[66,172.2],2);
   if(modern){route(0,[100.25,141.82],[142.71,149.65],5);route(0,[143.6,149.3],[165.64,141.94],3)}
+  if(!modern)route(0,[35,176],[48,182],3);
   waiting(0,40.6,175.1,1.0);
   waiting(0,41.65,175.6,-2.05);
   waiting(0,60.5,189,2.41);
