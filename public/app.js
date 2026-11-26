@@ -71,13 +71,25 @@ function frameTaipei(wide=false){
   const r=tpActive(),[dx,y,dz]=r.offset,factor=wide?1.55:1;
   aimStation([r.x+dx*factor,wide?r.height+dz*.54:y,r.z+dz*factor],[r.x,r.height,r.z]);
 }
-$('tpGeneration').onchange=e=>{
-  if(!ready||!isTaipei())return;
-  const n=Number(e.target.value);
+function changeTaipei(n){
+  if(!ready||!isTaipei()||n===(modern?5:tpPast))return;
+  const previous=tpActive();
+  window.atlasWorkshop?.beforeEra();
   if(n<5)tpPast=n;
-  setEra(n===5);showTaipeiStation();frameTaipei();updateLabels();
+  modern=n===5;
+  worlds.forEach((w,i)=>w.visible=i===Number(modern));
+  showTaipeiStation();
+  if($('tpFollow').checked){
+    const next=tpActive();
+    const scale=Math.hypot(next.offset[0],next.offset[2])/Math.hypot(previous.offset[0],previous.offset[2]);
+    focus={x:next.x+(focus.x-previous.x)*scale,y:next.height+(focus.y-previous.height)*scale,z:next.z+(focus.z-previous.z)*scale};
+    eye={x:next.x+(eye.x-previous.x)*scale,z:next.z+(eye.z-previous.z)*scale};
+    distance*=scale;
+  }
   syncArcadeLink(new URL(location.href));
-};
+  updateLabels();window.atlasWorkshop?.eraChanged();dirty=true;
+}
+$('tpGeneration').onchange=e=>changeTaipei(Number(e.target.value));
 const bookmarks={taichung:0,changhua:3,taipei:5,kaohsiung:6};
 function browsePlace(i){if(!ready)return;if(window.atlasWorkshop?.active())$('browseTab').click();choose(i)}
 for(const city of Object.keys(cities)){
@@ -127,7 +139,12 @@ $('gallery').onclick=renderGallery;
 function updateLabels(){let place=places[index],era=modern?1:0;const city=cityOf(index);
 $('cityHeading').textContent=cityTitle();$('cityEn').textContent=cities[city].en+' CITY · TAIWAN';
 $('tpGenerations').hidden=!isTaipei();
-if(isTaipei()){const r=tpActive();$('tpGeneration').value=String(modern?5:tpPast);$('tpNote').textContent=r.note;$('tpEvidence').href=r.source}
+if(isTaipei()){const r=tpActive();$('tpGeneration').value=String(modern?5:tpPast);$('tpNote').textContent=r.note;$('tpEvidence').href=r.source;
+ const n=modern?5:tpPast;
+ $('tpPreview').src='taipei-views/'+n+'-front.jpg';
+ $('tpPreview').alt=r.name+(n===1?'棚口老照片':'站前情境重建圖');
+ $('tpCompare').href='taipei.html?left='+(modern?tpPast:n)+'&right=5';
+}
 for(const key of Object.keys(cities))$(key+'City').setAttribute('aria-pressed',String(key===city));
 $('destination').value=String(index);$('taipeiLenses').hidden=!['taipei','kaohsiung'].includes(city);$('tpWide').textContent=city==='kaohsiung'?'俯瞰站區':'站區全景';$('tpClose').textContent=city==='kaohsiung'?'近看帝冠站房':'近看本年代站房';$('old').querySelector('span').textContent=pastLabel();$('viewName').textContent=placeTitle();$('stationLenses').hidden=index!==0;$('plazaView').setAttribute('aria-pressed',String(plazaLens&&!entranceLens));$('entranceView').setAttribute('aria-pressed',String(entranceLens));$('heritageView').setAttribute('aria-pressed',String(!plazaLens&&!arcadeLens));$('arcadeView').setAttribute('aria-pressed',String(arcadeLens));$('arcadeStudy').hidden=!arcadeLens;$('viewYear').textContent=modern?'Present day':isTaipei()?tpActive().period:pastYear()+'s';$('viewEnglish').textContent=index===0&&modern&&plazaLens?'TAICHUNG STATION':place.en;$('old').setAttribute('aria-pressed',String(!modern));$('now').setAttribute('aria-pressed',String(modern));$('modelInfo').textContent=modern?'當代圖資 · 依地圖與影像重建':pastLabel()+'意象 · 依照片與現代街廓重建';$('places').innerHTML=places.map((p,i)=>cityOf(i)!==cityOf(index)?'':'<button class="place '+(i===index?'active':'')+'" aria-pressed="'+(i===index)+'" data-index="'+i+'"><span class="place-thumb" style="background-image:url('+ (p.thumb||(p.key==='roundhouse'?'scene-roundhouse':'archive-'+p.key))+'.jpg)"></span><span><strong>'+p.district+'</strong><small>'+p.en+'</small></span><span class="goto">'+(i===index?'●':'›')+'</span></button>').join('');$('places').querySelectorAll('button').forEach(b=>b.onclick=()=>choose(+b.dataset.index));if(landmarks[index])$('coord').textContent=landmarks[index].lat.toFixed(3)+'° N / '+landmarks[index].lon.toFixed(3)+'° E';if(isTaipei()){const r=tpActive();$('coord').textContent='約 '+(25.04775-r.z/111320).toFixed(3)+'° N / '+(121.517+r.x/100850).toFixed(3)+'° E'}$('orbitBtn').classList.toggle('on',!walking);$('walkBtn').classList.toggle('on',walking);$('orbitBtn').setAttribute('aria-pressed',String(!walking));$('walkBtn').setAttribute('aria-pressed',String(walking));$('walkControls').hidden=!walking;window.atlasWorkshop?.updateCaption()}
 function choose(i){
@@ -150,14 +167,14 @@ if(p.look)focus={x:p.look[0],y:p.look[1],z:p.look[2]};
 if(plaza)focus=entranceLens?{x:191,y:16,z:131}:{x:115,y:11.5,z:192};
 const view=plaza?(entranceLens?[102,4.2,145]:[10,4.3,145]):p.camera;
 let dx=view[0]-focus.x,dy=view[1]-focus.y,dz=view[2]-focus.z;distance=Math.hypot(dx,dy,dz);theta=Math.atan2(dx,dz);elevation=Math.asin(dy/distance);eye=index===0&&plazaLens?(entranceLens?{x:111,z:144}:{x:53,z:146}):{x:p.walk[0],z:p.walk[1]};heading=Math.atan2(focus.x-eye.x,focus.z-eye.z);pitch=.045;if(isTaipei())frameTaipei();if(i===0&&arcadeLens)setArcadePose();dirty=true;window.atlasWorkshop?.placeChanged()}
-function setEra(next){if(!ready||modern===next)return;window.atlasWorkshop?.beforeEra();modern=next;if(isTaipei()){showTaipeiStation();if(tpPast===1)frameTaipei()}if(arcadeLens||isTaipei())syncArcadeLink(new URL(location.href));worlds.forEach((w,i)=>w.visible=i===Number(modern));updateLabels();window.atlasWorkshop?.eraChanged();dirty=true}
+function setEra(next){if(!ready||modern===next)return;if(isTaipei()){changeTaipei(next?5:tpPast);return}window.atlasWorkshop?.beforeEra();modern=next;if(arcadeLens)syncArcadeLink(new URL(location.href));worlds.forEach((w,i)=>w.visible=i===Number(modern));updateLabels();window.atlasWorkshop?.eraChanged();dirty=true}
 $('old').onclick=()=>setEra(false);$('now').onclick=()=>setEra(true);
 function setMode(value){if(walking===value)return;walking=value;held.clear();if(walking){const p=places[index];eye=index===0&&plazaLens?(entranceLens?{x:111,z:144}:{x:53,z:146}):{x:p.walk[0],z:p.walk[1]};heading=Math.atan2(focus.x-eye.x,focus.z-eye.z);pitch=.04;if(isTaipei()){const r=tpActive();eye={x:r.x+r.offset[0],z:r.z+r.offset[2]};heading=Math.atan2(r.x-eye.x,r.z-eye.z);pitch=Math.atan2(r.height-1.75,Math.hypot(r.offset[0],r.offset[2]))}if(index===0&&arcadeLens)setArcadePose()}updateLabels();dirty=true}
 $('orbitBtn').onclick=()=>setMode(false);$('walkBtn').onclick=()=>setMode(true);$('resetView').onclick=()=>choose(index);
 function zoom(n){if(!ready)return;if(walking)camera.fov=Math.max(24,Math.min(84,camera.fov+n*5));else distance=Math.max(12,Math.min(425,distance*Math.exp(n*.13)));dirty=true}
 $('plus').onclick=()=>zoom(-1);$('minus').onclick=()=>zoom(1);
 $('full').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('viewer').requestFullscreen()}catch{wide=!wide;$('viewer').classList.toggle('mobile-full',wide);resize()}};
-function move(dir,step=2){if(!walking){if(dir==='left')theta-=.09;if(dir==='right')theta+=.09;if(dir==='forward')elevation=Math.min(1.45,elevation+.06);if(dir==='back')elevation=Math.max(.055,elevation-.06)}else{let a=heading+({left:Math.PI/2,right:-Math.PI/2,forward:0,back:Math.PI}[dir]);let b=isTaipei()&&!modern&&tpPast===1?[-917,-484,-632,-205]:activeMap().bounds;eye.x=Math.max(b[0],Math.min(b[2],eye.x+Math.sin(a)*step));eye.z=Math.max(b[1],Math.min(b[3],eye.z+Math.cos(a)*step))}dirty=true}
+function move(dir,step=2){if(!walking){if(dir==='left')theta-=.09;if(dir==='right')theta+=.09;if(dir==='forward')elevation=Math.min(1.45,elevation+.06);if(dir==='back')elevation=Math.max(.055,elevation-.06)}else{let a=heading+({left:Math.PI/2,right:-Math.PI/2,forward:0,back:Math.PI}[dir]);let b=isTaipei()?[-930,-500,350,320]:activeMap().bounds;eye.x=Math.max(b[0],Math.min(b[2],eye.x+Math.sin(a)*step));eye.z=Math.max(b[1],Math.min(b[3],eye.z+Math.cos(a)*step))}dirty=true}
 document.querySelectorAll('[data-move]').forEach(b=>{const dir=b.dataset.move;b.onpointerdown=e=>{b.setPointerCapture(e.pointerId);move(dir,.8);held.add(dir)};b.onpointerup=b.onpointercancel=b.onlostpointercapture=()=>held.delete(dir)});
 const keyDirs={w:'forward',s:'back',a:'left',d:'right',ArrowUp:'forward',ArrowDown:'back',ArrowLeft:'left',ArrowRight:'right'};
 stage.onkeydown=e=>{const k=keyDirs[e.key];if(k){e.preventDefault();if(walking)held.add(k);else move(k)}};window.addEventListener('keyup',e=>held.delete(keyDirs[e.key]));window.addEventListener('blur',()=>held.clear());stage.onblur=()=>held.clear();

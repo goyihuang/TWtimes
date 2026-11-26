@@ -45,6 +45,13 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
     const m=new T.Mesh(g,new T.MeshStandardMaterial({color,map:streetTexture(texture),roughness:.93,side:T.DoubleSide}));
     m.receiveShadow=true;building.add(m);
   }
+  // Frontal studies supply the surface detail. Keep eaves, porticos and piers in relief.
+  function facadeDetail(file,x,y,z,width,height,repeat=1){
+    const map=new T.TextureLoader().load('taipei-views/'+file+'.jpg',()=>window.dispatchEvent(new Event('street-texture-ready')));
+    map.colorSpace=T.SRGBColorSpace;map.wrapS=T.RepeatWrapping;map.repeat.x=repeat;map.anisotropy=4;
+    const mesh=new T.Mesh(new T.PlaneGeometry(width,height),new T.MeshStandardMaterial({map,roughness:.9}));
+    mesh.position.set(x,y,z);mesh.receiveShadow=true;building.add(mesh);
+  }
   function earlyDepot(){
     const wood='#75644e',iron='#4d5350';
     gableRoof(0,5.1,-4,9.6,16.8,4.15,'#827d6c');
@@ -77,6 +84,20 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
       wheel.rotation.z=Math.PI/2;wheel.position.set(x,.52,z);building.add(wheel);
     }
     for(let y=1.03;y<1.96;y+=.22)block(1.5,y,9.5,2.48,.05,.05,iron);
+    // A steam locomotive at the open end of the yard, as in the shed photograph.
+    const boiler=new T.Mesh(new T.CylinderGeometry(.72,.72,4.1,24),new T.MeshStandardMaterial({color:'#424542',roughness:.72}));
+    boiler.rotation.x=Math.PI/2;boiler.position.set(-12,1.78,7.2);boiler.castShadow=true;building.add(boiler);
+    block(-12,.92,6.9,2.18,.36,7.4,iron);round(-12,2.88,8.65,.22,1.04,iron);round(-12,3.4,8.65,.32,.15,iron);
+    block(-12,3.12,4.65,2.34,.21,2.33,iron);
+    for(const side of [-1,1]){
+      block(-12+side*.94,1.63,4.65,.12,1.2,1.9,wood);
+      for(const z of [3.8,5.5])block(-12+side*.94,2.44,z,.12,1.32,.12,iron);
+      for(const z of [4.6,6.2,7.8]){
+        const wheel=new T.Mesh(new T.CylinderGeometry(.57,.57,.12,20),boiler.material);
+        wheel.rotation.z=Math.PI/2;wheel.position.set(-12+side*.78,.7,z);building.add(wheel);
+      }
+      block(-12+side*.88,.78,6.2,.1,.1,3.4,'#9b9684');
+    }
     for(const x of [-30,24]){
       block(x,2,-20,10,4,8,'#a09078');gableRoof(x,4,-20,5.4,4.5,2,wood);
     }
@@ -116,6 +137,24 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
       panel(at(1.75,a,6.41),at(2.03,a,6.41),at(2.03,b,6.41),at(1.75,b,6.41),i%2?stonework:brick);
     }
     for(const s of [-1,1])strut(-3.4*s,11.3,0,13.3,6.32,.23,stonework);
+    // Projecting porch with a walk-in recess under the first-floor terrace.
+    for(const side of [-1,1]){
+      const x=side*2.85;block(x,2.13,8.2,1.73,4.26,4.0,brick);
+      for(let y=.52;y<4.4;y+=.8)block(x,y,8.2,1.79,.24,4.05,stonework);
+    }
+    block(0,4.54,8.2,7.55,.63,4.17,stonework);
+    block(0,5.35,10.2,7.62,.2,.3,stonework);
+    for(let x=-3.6;x<=3.6;x+=.46)block(x,5.04,10.2,.16,.55,.22,stonework);
+    for(let i=0;i<18;i++){
+      const a=i*Math.PI/18,b=(i+1)*Math.PI/18;
+      const p=(r,ang,z)=>[r*Math.cos(ang),2.25+r*Math.sin(ang),z];
+      panel(p(1.98,a,10.23),p(2.26,a,10.23),p(2.26,b,10.23),p(1.98,b,10.23),i%2?stonework:brick);
+      panel(p(1.98,a,10.23),p(1.98,b,10.23),p(1.98,b,6.43),p(1.98,a,6.43),shade);
+    }
+    facadeDetail('brick-hall',0,8.55,6.47,19.95,5.55);
+    panel([-4.5,11.32,6.44],[4.5,11.32,6.44],[0,13.38,6.44],[0,13.38,6.44],stonework);
+    for(let x=-5.9;x<=6;x+=.5)block(x,14.95,0,.05,.8,.05,'#55544d');
+    block(0,15.25,0,12,.06,.06,'#55544d');
     block(0,.20,7.5,13,.38,3.3,stonework);
   }
   function temporaryStation(){
@@ -132,8 +171,10 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
     block(19.7,4.95,6.82,14.3,9.9,.8,'#ddd9c8');
     for(let x=13;x<27;x+=2.0)block(x,5.2,7.24,.05,9.2,.05,frame);
     for(let y=1;y<10;y+=1.35)block(19.7,y,7.25,14.1,.04,.06,frame);
+    facadeDetail('window-bay',-7.6,5.05,7.13,39.8,4.42,11);
     label('臺 北 車 站',19.7,6.4,7.31,8.2,1.2,'#d8d7c9','#484741');
     label('12:08',19.7,8.48,7.35,6.5,1.35,'#3d413e','#c6c1a6');
+    facadeDetail('clock-wall',19.7,6.26,7.42,14.1,7.32);
     block(0,2.7,8.4,60,.37,5.3,'#71736d');
     for(let x=-26;x<29;x+=6.7){block(x,1.36,10.9,.21,2.72,.25,frame);block(x,1.36,6.9,4.65,2.61,.18,shade)}
     block(0,.17,8.1,59,.30,5.7,frame);
@@ -163,6 +204,7 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
       }
       for(let y=14;y<22.6;y+=1.95){block(0,y,side*58.94,149,.12,.27,bronze);block(side*74.68,y,0,.24,.12,117,bronze)}
     }
+    facadeDetail('concourse',0,17.62,59.13,148.8,9.42,9);
     rim(77.9,61.75,12.8,.43,bronze);rim(79.5,63.55,23.6,.53,trim);
     // Broad glazed-tile roof with swept eaves and a raised flat central crown.
     const layers=[[80,64,23.8],[76,60.8,24.35],[70,55.7,26.0],[62,48.8,29.4],[54,42.0,33.8],[45,34.3,39.0]];
@@ -179,6 +221,7 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
     }
     block(0,39.3,0,90,.75,68.6,trim);block(0,40.7,0,84,2.3,63.8,'#beb8a7');
     label('臺 北 車 站　 TAIPEI MAIN STATION',0,40.85,32.04,35,2.3,'#bcb9ad','#544c43');
+    facadeDetail('crown',0,40.72,32.08,83.9,2.28);
     for(let x=-59;x<=60;x+=28.7){block(x,3.95,62,11.7,.33,6.4,bronze);block(x,4.7,54.55,8.6,1.15,.33,shade)}
     for(let j=0;j<3;j++)block(0,.10+j*.13,62.5-j*.57,142,.19,1.2,stone);
   }else{
@@ -194,7 +237,12 @@ window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
     }
     for(let i=-3;i<=3;i++){const x=i*2.51;block(x,9.35,11.65,1.92,6.24,.23,glass);block(x,9.25,11.82,.12,6,.13,sash);block(x,2.20,11.62,2.06,3.72,.22,shade)}
     for(const x of [-12.4,12.4]){block(x,8.1,11.8,1.18,15.5,.55,frame);block(x,11.6,12.12,1.72,1.78,.22,stone)}
-    label('臺　北　車　站',0,14.58,11.84,15,1.85,'#d6c7a6','#794538');
+    facadeDetail('stone-hall',0,11.85,12.3,26.92,9.12);
+    for(const [i,char] of [...'台北車站'].entries()){
+      const x=(i-1.5)*4.35;
+      label(char,x,18.13,9.8,2.37,2.32,'#d0c7b5','#9c3e34');
+      block(x,17.14,9.74,.10,1.03,.12,frame);
+    }
     block(0,4.8,13.3,30,.46,5.8,frame);for(const x of [-12,-6,6,12])block(x,2.37,15.35,.35,4.75,.35,frame);
     // Low arched spray over the basin, rendered as fine pale lines in the historic layer.
     const jets=[];for(let k=0;k<16;k++){const a=k*Math.PI/8;for(let j=0;j<12;j++){
