@@ -1,6 +1,6 @@
 /* Station-local x follows the southern frontage. Dimensions outside the mapped
    modern footprint are estimated from the station photographs. */
-window.addTaipeiStation=function(T,group,modern){
+window.addTaipeiStation=function(T,group,modern,generation=modern?5:3){
   const building=new T.Group(),boxes=new Map(),faces=new Map(),unit=new T.BoxGeometry();
   const stone='#c9b9a3',trim='#ded3bd',bronze='#877562',glass='#556a69',shade='#423e38',roof='#a35134';
   function block(x,y,z,w,h,d,color){
@@ -20,7 +20,132 @@ window.addTaipeiStation=function(T,group,modern){
     const tx=new T.CanvasTexture(c);tx.colorSpace=T.SRGBColorSpace;const s=new T.Mesh(new T.PlaneGeometry(width,height),new T.MeshLambertMaterial({map:tx,side:T.DoubleSide}));s.position.set(x,y,z);building.add(s);
   }
   function round(x,y,z,r,h,color){const m=new T.Mesh(new T.CylinderGeometry(r,r,h,64),new T.MeshStandardMaterial({color,roughness:.74}));m.position.set(x,y,z);m.receiveShadow=m.castShadow=true;building.add(m)}
-  if(modern){
+  // Additional station buildings share the existing batched timber, masonry and
+  // roof helpers; each gets its own group so the visitor can change generation.
+  function gableRoof(cx,y,cz,halfWidth,halfDepth,rise,color){
+    const ridge=y+rise;
+    panel([cx-halfWidth,y,cz-halfDepth],[cx,y+rise,cz-halfDepth],[cx,ridge,cz+halfDepth],[cx-halfWidth,y,cz+halfDepth],color);
+    panel([cx,ridge,cz-halfDepth],[cx+halfWidth,y,cz-halfDepth],[cx+halfWidth,y,cz+halfDepth],[cx,ridge,cz+halfDepth],color);
+  }
+  function strut(x1,y1,x2,y2,z,w,color){
+    const mesh=new T.Mesh(new T.BoxGeometry(w,Math.hypot(x2-x1,y2-y1),w),new T.MeshStandardMaterial({color}));
+    mesh.position.set((x1+x2)/2,(y1+y2)/2,z);mesh.rotation.z=-Math.atan2(x2-x1,y2-y1);
+    mesh.castShadow=mesh.receiveShadow=true;building.add(mesh);
+  }
+  function track(x,z,length){
+    for(const dx of [-.53,.53])block(x+dx,.16,z,.08,.14,length,'#62615c');
+    for(let i=-length/2;i<length/2;i+=.86)block(x,.078,z+i,2.12,.14,.19,'#746452');
+  }
+  // Scale the image in metres so the masonry keeps the same bond size around corners.
+  function surface(a,b,c,d,texture,width,height,color){
+    const g=new T.BufferGeometry();
+    g.setAttribute('position',new T.Float32BufferAttribute([...a,...b,...c,...a,...c,...d],3));
+    g.setAttribute('uv',new T.Float32BufferAttribute([0,0,width,0,width,height,0,0,width,height,0,height],2));
+    g.computeVertexNormals();
+    const m=new T.Mesh(g,new T.MeshStandardMaterial({color,map:streetTexture(texture),roughness:.93,side:T.DoubleSide}));
+    m.receiveShadow=true;building.add(m);
+  }
+  function earlyDepot(){
+    const wood='#75644e',iron='#4d5350';
+    gableRoof(0,5.1,-4,9.6,16.8,4.15,'#827d6c');
+    for(let z=-19;z<=12;z+=6.2){
+      for(const sign of [-1,1]){
+        block(sign*8.65,2.5,z,.28,5,.32,wood);
+        strut(sign*9,5,0,9, z,.2,wood);
+        strut(sign*6.1,6.3,sign*3.3,5,z,.16,wood);
+        strut(sign*3.3,5,0,8.65,z,.17,wood);
+      }
+      block(0,5.04,z,18,.23,.29,wood);block(0,7,z,.16,3.8,.19,wood);
+    }
+    for(const s of [-1,1]){
+      surface([s*9.6,5.13,12.8],[s*9.6,5.13,-20.8],[0,9.28,-20.8],[0,9.28,12.8],'slate',12,4,'#b3ac94');
+    }
+    for(let i=0;i<11;i++){
+      const x=5.2+(i%3)*1.13,z=5-Math.floor(i/3)*1.05,y=.76+(i===10?.56:0);
+      block(x,y+.3,z,.97,.58,.8,'#947a54');
+      for(const dx of [-.38,.38])block(x+dx,y+.3,z+.41,.075,.57,.04,wood);
+      block(x,y+.61,z,.98,.045,.81,'#af956a');
+    }
+    for(let z=-19;z<12;z+=.47)boxSlat(z);
+    function boxSlat(z){block(8.65,2.1,z,.15,4.1,.22,'#948770')}
+    for(const x of [-12,-5,1.5])track(x,-2,94);
+    block(5.4,.36,-3,4.0,.7,31,'#b6a286');
+    // A short freight wagon stands on the shed track.
+    block(1.5,1.38,7,2.5,1.15,4.9,wood);
+    for(const z of [5.4,8.6])for(const x of [.95,2.05]){
+      const wheel=new T.Mesh(new T.CylinderGeometry(.44,.44,.14,18),new T.MeshLambertMaterial({color:iron}));
+      wheel.rotation.z=Math.PI/2;wheel.position.set(x,.52,z);building.add(wheel);
+    }
+    for(let y=1.03;y<1.96;y+=.22)block(1.5,y,9.5,2.48,.05,.05,iron);
+    for(const x of [-30,24]){
+      block(x,2,-20,10,4,8,'#a09078');gableRoof(x,4,-20,5.4,4.5,2,wood);
+    }
+  }
+  function renaissanceStation(){
+    const brick='#9c5849',stonework='#d1be9e',tiles='#605e56',sash='#4b5149';
+    block(0,5.65,0,20,11.3,12,brick);
+    surface([-10,0,6.02],[10,0,6.02],[10,11.3,6.02],[-10,11.3,6.02],'brick',10,5.6,'#dfc3ad');
+    const roofLayers=[[10.8,6.9,11.4],[8.8,5.3,12.8],[6.1,3.7,14.5]];
+    const roofRings=roofLayers.map(r=>rectangle(...r));
+    for(let j=0;j<4;j++)for(let i=0;i<2;i++)panel(roofRings[i][j],roofRings[i][(j+1)%4],roofRings[i+1][(j+1)%4],roofRings[i+1][j],tiles);
+    block(0,14.5,0,12.2,.16,7.4,tiles);
+    for(const s of [-1,1]){
+      const cx=s*22;block(cx,2.49,0,24,4.98,10.5,brick);
+      surface([cx-12,0,5.27],[cx+12,0,5.27],[cx+12,4.98,5.27],[cx-12,4.98,5.27],'brick',12,2.5,'#e1c5af');
+      panel([cx-12.6,5.1,5.9],[cx+12.6,5.1,5.9],[cx+10,7.6,0],[cx-10,7.6,0],tiles);
+      panel([cx-12.6,5.1,-5.9],[cx+12.6,5.1,-5.9],[cx+10,7.6,0],[cx-10,7.6,0],tiles);
+      for(const side of [-1,1])panel([cx+side*12.6,5.1,5.9],[cx+side*12.6,5.1,-5.9],[cx+side*10,7.6,0],[cx+side*10,7.6,0],tiles);
+      for(let k=0;k<6;k++){
+        const x=s*(11.9+3.65*k);block(x,2.6,5.34,1.65,2.65,.12,sash);
+        block(x,2.6,5.44,.085,2.65,.12,stonework);block(x,3.1,5.44,1.65,.09,.14,stonework);
+      }
+      block(cx,3.7,7.2,24,.24,4.25,tiles);
+      for(let k=0;k<7;k++)block(s*(10.4+k*3.8),1.85,9.1,.17,3.7,.17,stonework);
+    }
+    for(let y=.85;y<11.4;y+=1.3)block(0,y,0,20.25,.23,12.23,stonework);
+    for(let x=-7.4;x<8;x+=3.7){
+      block(x,8.15,6.19,2.15,4.15,.23,sash);
+      block(x,8.22,6.35,.1,4.08,.1,stonework);block(x,8.65,6.35,2.15,.12,.10,stonework);
+    }
+    // Arched entrance framed by alternating brick and pale voussoirs.
+    block(0,1.12,6.22,3.5,2.25,.26,'#3c4039');
+    for(let i=0;i<18;i++){
+      const at=(r,a,z)=>[r*Math.cos(a),2.25+r*Math.sin(a),z];
+      const a=i*Math.PI/18,b=(i+1)*Math.PI/18;
+      panel([0,2.25,6.36],at(1.75,a,6.36),at(1.75,b,6.36),[0,2.25,6.36],'#3c4039');
+      panel(at(1.75,a,6.41),at(2.03,a,6.41),at(2.03,b,6.41),at(1.75,b,6.41),i%2?stonework:brick);
+    }
+    for(const s of [-1,1])strut(-3.4*s,11.3,0,13.3,6.32,.23,stonework);
+    block(0,.20,7.5,13,.38,3.3,stonework);
+  }
+  function temporaryStation(){
+    const concrete='#c5c2ae',frame='#a49e8e';
+    surface([-40,.09,14],[40,.09,14],[40,.09,35],[-40,.09,35],'asphalt',16,4.2,'#cabfaf');
+    block(0,3.75,0,57,7.5,13,concrete);
+    block(0,4.35,6.62,56.8,4.1,.24,'#566365');
+    for(let x=-27;x<=27;x+=3.1){
+      block(x,4.6,6.85,.23,5,.38,frame);
+      block(x,3.44,6.87,2.87,1.58,.32,'#b3afa0');
+      for(let y=2.78;y<4.2;y+=.25)block(x,y,7.04,2.7,.055,.08,'#97998e');
+    }
+    block(0,7.48,0,58,.38,13.8,frame);
+    block(19.7,4.95,6.82,14.3,9.9,.8,'#ddd9c8');
+    for(let x=13;x<27;x+=2.0)block(x,5.2,7.24,.05,9.2,.05,frame);
+    for(let y=1;y<10;y+=1.35)block(19.7,y,7.25,14.1,.04,.06,frame);
+    label('臺 北 車 站',19.7,6.4,7.31,8.2,1.2,'#d8d7c9','#484741');
+    label('12:08',19.7,8.48,7.35,6.5,1.35,'#3d413e','#c6c1a6');
+    block(0,2.7,8.4,60,.37,5.3,'#71736d');
+    for(let x=-26;x<29;x+=6.7){block(x,1.36,10.9,.21,2.72,.25,frame);block(x,1.36,6.9,4.65,2.61,.18,shade)}
+    block(0,.17,8.1,59,.30,5.7,frame);
+    for(let j=0;j<4;j++)label(['站','車','北','臺'][j],-20+j*7.1,8.29,5.8,1.62,1.55,'#b8b7a9','#494743');
+  }
+  const entry=TAIPEI_GENERATIONS[generation-1];building.name=entry.name;
+  if([1,2,4].includes(generation)){
+    building.position.set(entry.x,0,entry.z);building.rotation.y=generation===1?.24:-.12;
+    if(generation===1)earlyDepot();
+    if(generation===2)renaissanceStation();
+    if(generation===4)temporaryStation();
+  }else if(modern){
     building.position.set(11.5,0,3.6);building.rotation.y=-.187;
     // Recessed lower colonnade and a continuous projecting upper window band.
     block(0,6.0,0,141,12,108,stone);block(0,17.6,0,149,9.8,117,glass);
@@ -92,5 +217,5 @@ window.addTaipeiStation=function(T,group,modern){
   }
   for(const [color,items] of boxes){const mesh=new T.InstancedMesh(unit,new T.MeshStandardMaterial({color,roughness:.82}),items.length);items.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.castShadow=mesh.receiveShadow=true;building.add(mesh)}
   for(const [color,buf] of faces){const geom=new T.BufferGeometry();geom.setAttribute('position',new T.Float32BufferAttribute(buf,3));geom.computeVertexNormals();const mesh=new T.Mesh(geom,new T.MeshStandardMaterial({color,roughness:.89,side:T.DoubleSide}));mesh.castShadow=mesh.receiveShadow=true;building.add(mesh)}
-  group.add(building);
+  group.add(building);return building;
 };

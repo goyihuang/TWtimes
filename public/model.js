@@ -114,7 +114,7 @@ window.buildDistrict=function(modern,geo=window.GEODATA){
        for(let y=.65;y<b.height-.5;y+=.36)quad(mat('#717976'),at(.12,y),at(.88,y),at(.88,y+.11),at(.12,y+.11))}}
    continue;
  }
- if(taipei&&(b.id==='23641610'||!modern&&((c[0]>-275&&c[0]<103&&c[1]>-83&&c[1]<72)||b.id==='204711206')))continue;
+ if(taipei&&(b.id==='23641610'||!modern&&((c[0]>-332&&c[0]<103&&c[1]>-83&&c[1]<72)||b.id==='204711206')))continue;
  if(changhua&&['220285047','254298293','315751658'].includes(b.id))continue;
  if(['223056023','322998166','442234244','888036277','888036278','888036279','888036280','888036281','888315735','888315736','888315737','888315738'].includes(b.id))continue;
  const yard=changhua&&c[0]>85&&c[0]<206&&c[1]<-205&&c[1]>-340;
@@ -174,8 +174,20 @@ window.buildDistrict=function(modern,geo=window.GEODATA){
  for(const rail of geo===window.GEODATA?geo.rails:[]){if(rail.type==='disused'||['442234245','442234246','574701710','581277606','653778289'].includes(rail.id))continue;strip(rail.points,1.55,.061,mat(modern?'#a5a496':'#948e78'))}
  for(let [m,b] of bucket){let g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(b.pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(b.uv,2));g.computeVertexNormals();let mesh=new T.Mesh(g,m);track(mesh,b.ranges,false);mesh.receiveShadow=true;mesh.castShadow=m.map!==null||!([roads,curb,path].includes(m));group.add(mesh)}
  for(const b of instances.values()){const foliage=b.shape==='spray';const m=foliage?new T.MeshLambertMaterial({map:streetTexture('leaves'),alphaTest:.37,color:b.color,side:T.DoubleSide}):mat(b.color);const mesh=new T.InstancedMesh(shapes[b.shape],m,b.m.length);if(foliage)mesh.userData.foliage=true;b.m.forEach((m,i)=>mesh.setMatrixAt(i,m));track(mesh,b.ranges,true);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh)}
- if(kaohsiung)addKaohsiungStation(T,group,modern,geo);else if(taipei)addTaipeiStation(T,group,modern);else if(changhua)addChanghuaRail(T,group,modern);else if(modern)addStationPrecinct(T,group);
+ if(kaohsiung)addKaohsiungStation(T,group,modern,geo);else if(taipei){
+   const stations=new Map();
+   for(const n of modern?[5]:[1,2,3,4]){
+     const station=addTaipeiStation(T,group,modern,n);
+     station.visible=modern||n===3;stations.set(n,station);
+   }
+   group.userData.taipeiStations=stations;
+ }else if(changhua)addChanghuaRail(T,group,modern);else if(modern)addStationPrecinct(T,group);
  const people=makePedestrians(T,modern,kaohsiung?'kaohsiung':taipei?'taipei':changhua?'changhua':'taichung');group.userData.people=people;group.add(people.group);
+ if(taipei&&!modern){
+   const early=makePedestrians(T,false,'taipei-early');
+   group.add(early.group);early.group.visible=false;
+   group.userData.stationCrowds={early,postwar:people};
+ }
  return group;
 };
 })();

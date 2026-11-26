@@ -28,3 +28,5 @@
 .destination-bar .yuanshan-link{min-height:38px;display:inline-flex;align-items:center;padding:.3rem .9rem;border-radius:3px;background:#2a2418;color:#f0d79c;text-decoration:none;font-size:.86rem;letter-spacing:.08em;border:1px solid #8a6c35;white-space:nowrap}.destination-bar .yuanshan-link:hover{background:#3a3020}
 
 #stationLenses{flex-wrap:wrap}.arcade-study{margin:0}.arcade-study img{display:block;width:100%;height:auto}.arcade-study figcaption{padding:.75em 0;color:#435346;line-height:1.6}
+
+#tpGenerations{margin:14px 0 10px;padding:12px 0;border-block:1px solid #c9c8b8}#tpGenerations label{display:block;font-weight:700;margin-bottom:6px}#tpGenerations select{font:inherit;background:#faf9f1;color:#293c31;border:1px solid #bbbdae;border-radius:4px;padding:6px;width:100%}#tpGenerations p,#tpEvidence{font-size:.83rem;line-height:1.6}#tpGenerations p{margin:8px 0 3px}#tpEvidence{color:#3c604c}
