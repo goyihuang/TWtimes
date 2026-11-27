@@ -22,13 +22,65 @@ for(let k=-3;k<=3;k++)framedArch(g,k*3.45,7.1,12.52,2.15,4.65);
 for(let k=-1;k<=1;k++)framedArch(g,k*7.4,.28,12.52,4.7,5.8);
 for(let x of [-11.2,-3.8,3.8,11.2]){box(g,x,0,12.9,1.05,11.7,.66,0xdcd6c6);for(let y of [.15,.45,.75,11.45,11.75])box(g,x,y,13,1.42,.20,.88,0xe5decc)}
 box(g,0,6.35,12.85,30,.33,.55,0xdad3c1);box(g,0,12.5,12.85,30,.4,.65,0xe2dbcc);
-clock(g,0,12.9,13.22,i>=3);label(g,i===1?'臺南驛':'臺南車站',0,15,12.9);box(g,0,0,16,32,.25,7,0xa8a49b);
+clock(g,0,12.9,13.22,i>=3);if(i===1){
+ // Front and oblique completion photographs show a shaded projecting entrance and a raised end bay.
+ box(g,0,5.85,15.7,24,.36,6.3,0xc6bdab);
+ const face=new T.Shape();face.moveTo(-12,0);face.lineTo(0,1.32);face.lineTo(12,0);face.closePath();
+ const pediment=new T.Mesh(new T.ExtrudeGeometry(face,{depth:.28,bevelEnabled:false}),mat(0xd6cebb));
+ pediment.position.set(0,6.20,18.56);g.add(pediment);
+ for(const x of [-2.7,-2,-1.3]){const medallion=new T.Mesh(new T.CircleGeometry(.32,20),mat(0x655f51));medallion.position.set(x+2,6.63,18.86);g.add(medallion)}
+ box(g,24,10.8,1.4,5.1,3.2,5,0xcfc7b5);box(g,24,14,1.4,5.65,.35,5.55,0x918c7c);
+ framedArch(g,24,11.4,3.92,1.15,1.9);
+}else label(g,'臺南車站',0,15,12.9);box(g,0,0,16,32,.25,7,0xa8a49b);
 box(g,0,0,-17,58,6,14,wall);box(g,0,6,-17,60,.45,15,0x92978f);
 for(let x of [-34.1,34.1])for(let z of [-7,0,7]){const side=box(g,x,6,z,.12,2.4,2.2,0x53605b);}
 }
 if(i===4){box(g,47,0,-8,25,3,30,0x999f9d);box(g,47,3,-8,27,.5,32,0xd8d9ce);for(let x=36;x<60;x+=6)box(g,x,0,7,.5,3,.5,0x484d4d);label(g,'地下站示意',47,4.8,8.3)}return g}
 const world=new T.Group();scene.add(world);box(world,0,-.4,0,800,.4,800,0xaaa690);const groups=[];let seed=53;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-for(let i=0;i<eras.length;i++){const g=station(i);groups.push(g);world.add(g);box(g,0,.02,37,105,.15,45,i<2?0xb2a58b:0x929493);box(g,0,.01,73,650,.14,15,0x666b68);box(g,-65,.01,0,13,.14,650,0x666b68);if(i<4){for(let x of [-7,-3,1,5]){box(g,x,.04,-35,.12,.13,44,0x464743)}for(let z=-56;z<-13;z+=1.5)box(g,-1,.03,z,16,.12,.35,0x786857);box(g,14,0,-35,7,.6,45,0xb4b0a3);box(g,14,4,-35,8,.25,43,0x777b75)}seed=53;for(let side of [-1,1])for(let k=0;k<18;k++){let x=side*(82+(k%3)*19),z=-130+Math.floor(k/3)*43;let h=4+rand()*(i<2?6:18);box(g,x,0,z,12,h,15,i<2?0xb69a79:0xc3bca9);if(i<2)roof(g,x,h,z,13,16,2,0x57534a);for(let y=1.5;y<h-1;y+=3)for(let a=-4;a<=4;a+=4)box(g,x+a,y,z+7.55,1.4,1.6,.15,0x505a55)}for(let k=0;k<10;k++){const x=(k<5?-1:1)*(46+(k%5)*8),z=48+(k%5)*3;box(g,x,0,z,.6,4,.6,0x685743);const t=new T.Mesh(new T.SphereGeometry(3.7,10,8),mat(0x64784c));t.position.set(x,5,z);t.castShadow=true;g.add(t)}enrich(g,i,{box,mat,label,roof});g.visible=false}
+// Historical platform spacing is interpretive; the tracks run along the rear facade.
+const stoneMap=new T.TextureLoader().load('textures/brushed_concrete_03.jpg');
+stoneMap.colorSpace=T.SRGBColorSpace;stoneMap.wrapS=stoneMap.wrapT=T.RepeatWrapping;stoneMap.repeat.set(32,1);
+mat(0xa69b85).map=stoneMap;
+mat(0x646d65).emissive.setHex(0x31352f);
+function addPlatforms(g){
+ for(const z of [-30,-43]){
+   for(const offset of [-.5335,.5335])box(g,0,.13,z+offset,142,.13,.08,0x514e49);
+   for(let x=-70;x<=70;x+=1.15)box(g,x,.02,z,.19,.13,2.05,0x766451);
+ }
+ for(const z of [-26,-37]){
+   box(g,0,0,z,132,.76,5.4,0xa69b85);
+   for(const edge of [-2.54,2.54])box(g,0,.76,z+edge,132,.07,.24,0xd3cbb6);
+   for(const side of [-1,1]){
+     const sheet=box(g,0,4.96,z+side*1.66,134,.15,3.4,0x646d65);
+     sheet.rotation.x=side*.095;
+   }
+   for(let x=-60;x<=60;x+=7.5){
+     box(g,x,.76,z,.17,4.38,.21,0x60645c);
+     for(const side of [-1,1]){
+       const brace=box(g,x,3.62,z+side*.75,.13,1.95,.15,0x5e655d);
+       brace.rotation.x=side*.86;
+     }
+   }
+ }
+}
+// Submit identical material boxes together, including sleepers, frames and facade masonry.
+function batchBoxes(group){
+ const batches=new Map();
+ for(const mesh of [...group.children]){
+   if(mesh.geometry?.type!=='BoxGeometry'||mesh.userData.lamp)continue;
+   const {width,height,depth}=mesh.geometry.parameters;
+   mesh.updateMatrix();
+   if(!batches.has(mesh.material))batches.set(mesh.material,[]);
+   batches.get(mesh.material).push(mesh.matrix.clone().scale(new T.Vector3(width,height,depth)));
+   group.remove(mesh);mesh.geometry.dispose();
+ }
+ const unit=new T.BoxGeometry();
+ for(const [material,matrices] of batches){
+   const batch=new T.InstancedMesh(unit,material,matrices.length);
+   matrices.forEach((m,i)=>batch.setMatrixAt(i,m));batch.castShadow=batch.receiveShadow=true;group.add(batch);
+ }
+}
+for(let i=0;i<eras.length;i++){const g=station(i);groups.push(g);world.add(g);box(g,0,.02,37,105,.15,45,i<2?0xb2a58b:0x929493);box(g,0,.01,73,650,.14,15,0x666b68);box(g,-65,.01,0,13,.14,650,0x666b68);if(i<4)addPlatforms(g);seed=53;for(let side of [-1,1])for(let k=0;k<18;k++){let x=side*(82+(k%3)*19),z=-130+Math.floor(k/3)*43;let h=4+rand()*(i<2?6:18);box(g,x,0,z,12,h,15,i<2?0xb69a79:0xc3bca9);if(i<2)roof(g,x,h,z,13,16,2,0x57534a);for(let y=1.5;y<h-1;y+=3)for(let a=-4;a<=4;a+=4)box(g,x+a,y,z+7.55,1.4,1.6,.15,0x505a55)}for(let k=0;k<10;k++){const x=(k<5?-1:1)*(46+(k%5)*8),z=48+(k%5)*3;box(g,x,0,z,.6,4,.6,0x685743);const t=new T.Mesh(new T.SphereGeometry(3.7,10,8),mat(0x64784c));t.position.set(x,5,z);t.castShadow=true;g.add(t)}enrich(g,i,{box,mat,label,roof});batchBoxes(g);g.visible=false}
 const detailLoader=new GLTFLoader();
 for(const [file,targets] of [['tainan-timber-porch',[0]],['tainan-hotel-gallery',[1,2,3,4]]]){
  detailLoader.load('models/'+file+'.glb',({scene:detail})=>{
@@ -41,8 +93,8 @@ let modernContext=null;
 loadModernContext().then(g=>{modernContext=g;world.add(g);g.visible=current===4;$('status').textContent='現代 OSM 街廓已載入｜站房及歷史年代仍為示意';}).catch(()=>{$('status').textContent='OSM 資料尚未提供｜使用示意街廓';});
 let current=0;function setEra(i){current=Math.max(0,Math.min(4,i));groups.forEach((g,j)=>g.visible=j===current);if(modernContext)modernContext.visible=current===4;$('story').textContent=eras[current][0]+'｜'+eras[current][1]+'：'+eras[current][2];[...$('eras').children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===current)))}
 eras.forEach((e,i)=>{const b=document.createElement('button');b.textContent=e[0]+' '+e[1];b.onclick=()=>setEra(i);$('eras').append(b)});
-const shots=[[0,12,100],[90,25,95],[120,140,160],[85,28,-95]];function setShot(i){camera.position.set(...shots[i]);controls.target.set(0,5,0);controls.update()}
+const shots=[[0,12,100],[90,25,95],[120,140,160],[85,28,-95],[18,3.1,35],[53,2.45,-24.6]];function setShot(i){camera.position.set(...shots[i]);controls.target.set(...(i===5?[8,2.25,-34.5]:i===4?[0,5.5,14]:[0,5,0]));controls.update()}
 function climate(){const h=+$('hour').value,w=$('weather').value,a=Math.sin((h-6)/24*Math.PI*2),day=Math.max(0,a);$('clock').value=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.round(h%1*60)).padStart(2,'0');sun.position.set(Math.cos((h-6)/24*Math.PI*2)*160,Math.max(4,day*180),80);sun.intensity=(.08+day*3)*(w==='clear'?1:.45);hemi.intensity=.25+day*1.6;const sky=new T.Color(0x18243b).lerp(new T.Color(w==='clear'?0xb6d2df:0x9da8ac),Math.min(1,day*3));scene.background=sky;setNight(groups,day<.15);scene.fog=new T.FogExp2(scene.background,w==='fog'?.013:w==='rain'?.006:.0015)}
 const rainGeo=new T.BufferGeometry(),rp=new Float32Array(1500*6);for(let i=0;i<rp.length;i+=6){let x=(rand()-.5)*300,y=rand()*80,z=(rand()-.5)*300;rp.set([x,y,z,x-.12,y+1.3,z],i)}rainGeo.setAttribute('position',new T.BufferAttribute(rp,3));const rain=new T.LineSegments(rainGeo,new T.LineBasicMaterial({color:0xb9d2de,transparent:true,opacity:.45}));scene.add(rain);
 $('hour').oninput=climate;$('weather').onchange=climate;$('shot').onchange=()=>setShot(+$('shot').value);$('photo').onclick=()=>{renderer.render(scene,camera);canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tainan-'+eras[current][0]+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)})};$('share').onclick=async()=>{const u=new URL(location.href);u.searchParams.set('era',current);u.searchParams.set('t',$('hour').value);u.searchParams.set('w',$('weather').value);u.searchParams.set('shot',$('shot').value);try{await navigator.clipboard.writeText(u.href);$('status').textContent='已複製網址'}catch{$('status').textContent=u.href}};
-function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();if(q.has('t')&&Number.isFinite(+q.get('t')))$('hour').value=q.get('t');if(['clear','cloudy','rain','fog'].includes(q.get('w')))$('weather').value=q.get('w');let sh=Number(q.get('shot'));if(!Number.isInteger(sh)||sh<0||sh>3)sh=0;$('shot').value=sh;setShot(sh);let e=Number(q.get('era'));setEra(q.has('era')&&Number.isInteger(e)&&e>=0&&e<5?e:1);climate();$('status').textContent='歷史數位重建示意｜非測繪模型';renderer.setAnimationLoop(()=>{controls.update();rain.visible=$('weather').value==='rain';if(rain.visible){for(let i=0;i<rp.length;i+=6){rp[i+1]-=.7;rp[i+4]-=.7;if(rp[i+1]<0){rp[i+1]+=80;rp[i+4]+=80}}rainGeo.attributes.position.needsUpdate=true}renderer.render(scene,camera)});
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();if(q.has('t')&&Number.isFinite(+q.get('t')))$('hour').value=q.get('t');if(['clear','cloudy','rain','fog'].includes(q.get('w')))$('weather').value=q.get('w');let sh=Number(q.get('shot'));if(!Number.isInteger(sh)||sh<0||sh>=shots.length)sh=0;$('shot').value=sh;setShot(sh);let e=Number(q.get('era'));setEra(q.has('era')&&Number.isInteger(e)&&e>=0&&e<5?e:1);climate();$('status').textContent='歷史數位重建示意｜非測繪模型';renderer.setAnimationLoop(()=>{controls.update();rain.visible=$('weather').value==='rain';if(rain.visible){for(let i=0;i<rp.length;i+=6){rp[i+1]-=.7;rp[i+4]-=.7;if(rp[i+1]<0){rp[i+1]+=80;rp[i+4]+=80}}rainGeo.attributes.position.needsUpdate=true}renderer.render(scene,camera)});
