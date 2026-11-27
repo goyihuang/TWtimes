@@ -1,3 +1,4 @@
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { loadModernContext } from './osm.js';
@@ -27,7 +28,15 @@ for(let x of [-34.1,34.1])for(let z of [-7,0,7]){const side=box(g,x,6,z,.12,2.4,
 }
 if(i===4){box(g,47,0,-8,25,3,30,0x999f9d);box(g,47,3,-8,27,.5,32,0xd8d9ce);for(let x=36;x<60;x+=6)box(g,x,0,7,.5,3,.5,0x484d4d);label(g,'地下站示意',47,4.8,8.3)}return g}
 const world=new T.Group();scene.add(world);box(world,0,-.4,0,800,.4,800,0xaaa690);const groups=[];let seed=53;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-for(let i=0;i<eras.length;i++){const g=station(i);groups.push(g);world.add(g);box(g,0,.02,37,105,.15,45,i<2?0xb2a58b:0x929493);box(g,0,.01,73,650,.14,15,0x666b68);box(g,-65,.01,0,13,.14,650,0x666b68);if(i<4){for(let x of [-7,-3,1,5]){box(g,x,.04,-35,.12,.13,44,0x464743)}for(let z=-56;z<-13;z+=1.5)box(g,-1,.03,z,16,.12,.35,0x786857);box(g,14,0,-35,7,.6,45,0xb4b0a3);box(g,14,4,-35,8,.25,43,0x777b75)}seed=53;for(let side of [-1,1])for(let k=0;k<18;k++){let x=side*(82+(k%3)*19),z=-130+Math.floor(k/3)*43;let h=4+rand()*(i<2?6:18);box(g,x,0,z,12,h,15,i<2?0xb69a79:0xc3bca9);if(i<2)roof(g,x,h,z,13,16,2,0x57534a);for(let y=1.5;y<h-1;y+=3)for(let a=-4;a<=4;a+=4)box(g,x+a,y,z+7.55,1.4,1.6,.15,0x505a55)}for(let k=0;k<10;k++){const x=-48+k*11,z=58;box(g,x,0,z,.6,4,.6,0x685743);const t=new T.Mesh(new T.SphereGeometry(3.7,10,8),mat(0x64784c));t.position.set(x,5,z);t.castShadow=true;g.add(t)}enrich(g,i,{box,mat,label,roof});g.visible=false}
+for(let i=0;i<eras.length;i++){const g=station(i);groups.push(g);world.add(g);box(g,0,.02,37,105,.15,45,i<2?0xb2a58b:0x929493);box(g,0,.01,73,650,.14,15,0x666b68);box(g,-65,.01,0,13,.14,650,0x666b68);if(i<4){for(let x of [-7,-3,1,5]){box(g,x,.04,-35,.12,.13,44,0x464743)}for(let z=-56;z<-13;z+=1.5)box(g,-1,.03,z,16,.12,.35,0x786857);box(g,14,0,-35,7,.6,45,0xb4b0a3);box(g,14,4,-35,8,.25,43,0x777b75)}seed=53;for(let side of [-1,1])for(let k=0;k<18;k++){let x=side*(82+(k%3)*19),z=-130+Math.floor(k/3)*43;let h=4+rand()*(i<2?6:18);box(g,x,0,z,12,h,15,i<2?0xb69a79:0xc3bca9);if(i<2)roof(g,x,h,z,13,16,2,0x57534a);for(let y=1.5;y<h-1;y+=3)for(let a=-4;a<=4;a+=4)box(g,x+a,y,z+7.55,1.4,1.6,.15,0x505a55)}for(let k=0;k<10;k++){const x=(k<5?-1:1)*(46+(k%5)*8),z=48+(k%5)*3;box(g,x,0,z,.6,4,.6,0x685743);const t=new T.Mesh(new T.SphereGeometry(3.7,10,8),mat(0x64784c));t.position.set(x,5,z);t.castShadow=true;g.add(t)}enrich(g,i,{box,mat,label,roof});g.visible=false}
+const detailLoader=new GLTFLoader();
+for(const [file,targets] of [['tainan-timber-porch',[0]],['tainan-hotel-gallery',[1,2,3,4]]]){
+ detailLoader.load('models/'+file+'.glb',({scene:detail})=>{
+   detail.rotation.y=Math.PI;
+   detail.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true});
+   for(const i of targets)groups[i].add(detail.clone());
+ },undefined,()=>{$('story').insertAdjacentText('afterend',' 站房細部模型未載入。')});
+}
 let modernContext=null;
 loadModernContext().then(g=>{modernContext=g;world.add(g);g.visible=current===4;$('status').textContent='現代 OSM 街廓已載入｜站房及歷史年代仍為示意';}).catch(()=>{$('status').textContent='OSM 資料尚未提供｜使用示意街廓';});
 let current=0;function setEra(i){current=Math.max(0,Math.min(4,i));groups.forEach((g,j)=>g.visible=j===current);if(modernContext)modernContext.visible=current===4;$('story').textContent=eras[current][0]+'｜'+eras[current][1]+'：'+eras[current][2];[...$('eras').children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===current)))}
