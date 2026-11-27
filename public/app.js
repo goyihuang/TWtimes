@@ -273,7 +273,7 @@ function restoreShared(q){
   if(q.get('walk')==='1'){if(!walking)setMode(true);eye={x:px,z:pz};heading=Math.atan2(tx-px,tz-pz);pitch=Math.atan2(ty-py,Math.hypot(tx-px,tz-pz))}
   else{if(walking)setMode(false);focus={x:tx,y:ty,z:tz};const dx=px-tx,dy=py-ty,dz=pz-tz;distance=Math.hypot(dx,dy,dz)||60;theta=Math.atan2(dx,dz);elevation=Math.asin(dy/distance)}
  }
- dirty=true;window.streetAtlas.restored=true;
+ dirty=true;window.streetAtlas.restored=true;updateLabels();
 }
 window.streetAtlas={
  get ready(){return ready},
@@ -284,7 +284,7 @@ window.streetAtlas={
  get tpPast(){return tpPast},
  get walking(){return walking},
  get shot(){return index===0&&arcadeLens?3:shotNo},
- get mm(){return lensMM||Math.round(12/Math.tan((camera?camera.fov:44)*Math.PI/360))},
+ get mm(){return lensMM||Math.max(16,Math.min(105,Math.round(12/Math.tan((camera?camera.fov:44)*Math.PI/360))))},
  pastYear,
  shots:()=>shotsFor().map(([name])=>({name})),
  setShot:applyShot,

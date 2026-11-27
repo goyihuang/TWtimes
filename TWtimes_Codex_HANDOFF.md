@@ -246,3 +246,21 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 2. 補新竹、嘉義、鹿港座標（OSM 或官方資料）。
 3. 新竹車站可作為下一個場景（使用者已有 `G:\Ai Data\今昔\新竹` 素材）；完成後在 registry 把 `status` 改 `live` 並填 `entry`、`thumbnail`。
 4. 主題「城門城牆」、清領時期全臺圖層目前空缺。
+
+## 17. 2026-11-28 統一場景介面與美術規範（Claude Code，分支 `claude/project-thread-eez0fh`）
+**起點**：main `6c2b7cd`（MAP V2 已合併上線）。使用者要求「先統一，再擴張」：臺中兩版本只留正確的一版、以臺南介面為標準統一 3D 互動、建立美術規範、新景點先做平面圖文整理。本輪只在雲端用 repo 工作，未讀取 `G:\Ai Data\今昔`。
+
+**本次修改**
+- 共用模組 `src/shared/`：`tokens.css`（色票與字體）、`scene-panel.js/.css`（年代列、鏡位、焦距、天氣、時刻、漫步、今昔並排、複製網址、純畫面、場景開關、重建依據表；引擎不支援的功能自動隱藏）、`platform-frame.js`（獨立引擎接首頁框架、全站街景目錄）、`legacy-bridge.js`（`public/app.js` 場景轉成場景 API）。介面規格見 `docs/scene-contract.md`。
+- 臺南 `src/tainan/platform.js` 改用共用面板，行為不變。
+- `public/app.js`：新增 `window.streetAtlas`（鏡位組、焦距、今昔並排、分享網址含 era／shot／mm／cam／walk）、`atlas-change` 事件；舊參數 `view=arcade`、`generation` 照常。
+- 圓山併入首頁框架：`src/yuanshan/main.js` 改成 `createYuanshan(canvas, ui)`，尺寸跟隨畫布、拍照改存「我的攝影」、新增今昔並排與含相機的分享網址、每個時代補上依據表（`eras.js`）；`yuanshan.html` 改為轉址頁；刪除 `yuanshan.css`，標註樣式移到 `tags.css`。registry 的圓山 entry 改為 `./?place=yuanshan`。
+- 文件：`docs/art-direction.md`（美術與介面規範、驗收表）、`docs/scene-inventory.md`（盤點與臺中比對）、`docs/source-cards.md`（史料卡格式與進 3D 門檻）、`docs/scene-contract.md`、`docs/unify/*.jpg`。
+
+**臺中兩版本**：以 `public/archive-station.jpg`（約 1931 年明信片，PDM）比對，`taichung-1935.html` 的站房（`station1917.glb`）塔與中央山牆不符，首頁版 `?place=station` 相符。未刪除，等使用者決定；建議先把 1935 版的天氣與時刻移植到首頁框架後再退場（詳見 `docs/scene-inventory.md` 第 1 節）。
+
+**下一步**
+1. 使用者確認臺中 1935 版處理方式。
+2. `app.js` 場景補光影（色調映射、年代調色、時刻天氣），可沿用臺南做法；長期把 `app.js` 改 ES module，去掉 `three.min.js` 舊版。
+3. 每個場景補到六鏡位；圓山加漫步。
+4. 使用者電腦開機後，依 `docs/source-cards.md` 先整理臺中、新竹的史料卡。
