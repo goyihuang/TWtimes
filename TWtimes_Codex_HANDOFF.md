@@ -198,3 +198,27 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 
 ## 14. 臺南整合原站
 臺南由首頁城市列進入 ?place=tainan，共用主畫布框架、街景索引、定位圖、年代列及本機相簿。舊 tainan.html 保留查詢參數導回首頁。src/tainan/platform.js 接合原站控制項與既有臺南引擎。已實測首頁選臺南、五年代與六鏡位載入、1970 拍攝入相簿、切回臺北。臺南尚無街屋工坊與步行模式。
+
+## 15. 2026-11-28 臺南高品質重建（Claude Code，分支 `claude/project-thread-w08vgx`）
+**起點核對**：PR #5 已於先前合併 main，main 為 `6c03c52`（臺南已整合首頁 `?place=tainan`）；本輪從 main 開新分支，未改動其他場景。
+
+**本次修改**
+- 站房改為 Blender 完整模型（取代先前方塊站體與兩組門廊部件，已刪除 `tainan-timber-porch.glb`、`tainan-hotel-gallery.glb`、`tools/blender/tainan_station.py`）：
+  - `tools/blender/tainan_station_1936.py` → `public/models/tainan-1936.glb`：OSM 外框定位、布林開窗（內縮玻璃＋窗框＋窗台）、七扇高拱窗、八道壁柱與格紋柱頭、圓環紋章、三拱門廊與兩側圓窗、雨庇托架與低山形楣、翼棟、塔屋、煙囪、兩端廊棚、月臺側長簷。材質名稱固定（`tn_tile`、`tn_trim`、`tn_glass`…），網頁依年代換成戰後白漆、夜間窗光、雨天濕面。
+  - `tools/blender/tainan_station_1900.py` → `tainan-1900.glb`（木造站房：寄棟瓦頂、中央高棟、玄關破風山牆、正面迴廊）與 `tainan-canopy.glb`（鋼軌雨棚 6 m 單元）。
+  - 模型直接用站區本地座標（Blender X=x、Y=-z、Z=y），網頁端不旋轉、不位移。
+- 引擎重寫（`src/tainan/`）：`main.js`（Sky 天空＋依太陽赤緯與時角算的太陽位置、PMREM 環境光、陰影、後製調色共用 `src/yuanshan/post.js`、雨線、晨霧、夜間路燈光池與站前暖光、年代淡入淡出且鏡頭不動、漫步、今昔並排、分享）、`scenery.js`（OSM 道路／路緣／標線、圓環、街廓立面貼圖與夜間窗光、樹與大王椰子、銅像、路燈、月臺、軌道、架空線、列車、車流、行人、2026 施工廊帶與鷹架）、`eras.js`（五年代資料、六鏡位、每年代依據與可信度）、`osm.js`（座標轉換與解析）、`kit.js`（程序貼圖與幾何）。`art.js` 已移除。
+- `platform.js`：焦距滑桿、漫步、今昔並排、重建依據表、分享網址含年代／天氣／時刻／焦距／相機位置。
+- 文件：`docs/tainan-evidence.md`（逐項依據與可信度）、`docs/tainan/*.jpg`（實測截圖）、README 臺南段落。
+
+**實測（雲端容器 Chromium＋SwiftShader 軟體 WebGL；非實體 GPU，不提供 FPS）**
+- `npm ci`、`npm run build` 通過；`vite preview` 的 dist 測試：五年代、六鏡位、晴／雨／霧／夜、漫步（鍵盤移動、碰撞）、分享網址重開還原（年代、漫步、相機）、今昔並排與拍攝存入「我的攝影」、舊 `tainan.html?era=0&shot=4` 轉址、390×844 手機版面皆實際操作過，無 console error、無 404。
+- 回歸：首頁、臺中、彰化、臺北、高雄、`taichung-1935.html`、`yuanshan.html` 皆可載入且無錯誤。
+- 截圖：`docs/tainan/1936-front.jpg`、`1920-front.jpg`、`1970-front.jpg`、`2019-front.jpg`、`2026-front.jpg`、`1936-night-rain.jpg`、`1936-platform.jpg`、`1936-beimen.jpg`、`2019-aerial.jpg`、`mobile-1936.jpg`。
+
+**已知限制／下一步**
+1. 歷史街廓仍是示意（現代外框位置＋年代外觀），需中研院 1930 年代市街圖、1945 航照重建。
+2. 站房尺寸以照片比例推估；取得古蹟調查報告實測圖後校正 `tainan_station_1936.py` 頂部常數。
+3. 行人、車輛、列車為低多邊形示意；可再以 Blender 製作年代車種。
+4. 實機 GPU（桌機與手機）效能尚未量測。
+5. 臺南達標並經使用者同意後才合併 main 部署；之後依第 7 節做全臺 MAP V2。
