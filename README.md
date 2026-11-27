@@ -91,3 +91,11 @@ pip install bpy
 python3 tools/blender/station1917.py   # 臺中驛（1917）
 python3 tools/blender/station2016.py   # 臺中車站（2016 高架新站）
 ```
+
+## 臺南驛前（開發中）
+
+`tainan.html`（或 `?place=tainan`）為五年代 Three.js 程序化原型，含環繞鏡頭、時刻、天氣、攝影與場景參數。初版街廓和站房為示意幾何，尚未接入 OSM 或考證 GLB，不可視為精確史實。2026 年 10 月 17 日地下站已啟用。
+
+史料：[國家文化資產網](https://nchdb.boch.gov.tw/assets/overview/monument/19981218000001)、[鐵道局通車公告](https://www.rb.gov.tw/zh-TW/main/main_188/news/main_347/20261005_082504/)。
+
+後續：下載 OSM 資料、考證歷史街廓、依照片製作站房 GLB、整合步行及攝影功能、測試手機與其他場景。

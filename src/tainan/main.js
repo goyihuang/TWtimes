@@ -1,0 +1,48 @@
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as T from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { loadModernContext } from './osm.js';
+import { enrich, setNight } from './art.js';
+const $=id=>document.getElementById(id), q=new URLSearchParams(location.search);
+const eras=[['1920','第一代木造臺南驛','1900 年初代站房；木造外觀為初步推估。'],['1936','第二代臺南驛','1936 年新站落成，二樓曾設鐵道飯店。'],['1970','戰後府城','歷史站房與戰後商業街景；周邊為推估。'],['2019','地下化前','保留舊站與地面鐵道的示意。'],['2026','地下車站啟用','2026 年 10 月 17 日新地下站啟用；新站及地面配置尚待測繪。']];
+const canvas=$('scene'), renderer=new T.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=T.ACESFilmicToneMapping;
+const scene=new T.Scene(), camera=new T.PerspectiveCamera(44,1,.2,2200), controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=5;controls.maxDistance=700;
+const hemi=new T.HemisphereLight(0xe2edff,0x82705b,2), sun=new T.DirectionalLight(0xffe2ba,3);scene.add(hemi,sun);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-180,right:180,top:180,bottom:-180,far:700});sun.shadow.bias=-.0005;
+const mats=new Map();function mat(c){if(!mats.has(c))mats.set(c,new T.MeshStandardMaterial({color:c,roughness:.82}));return mats.get(c)}
+function box(g,x,y,z,w,h,d,c){const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat(c));m.position.set(x,y+h/2,z);m.castShadow=m.receiveShadow=true;g.add(m);return m}
+function roof(g,x,y,z,w,d,h,c){const s=new T.Shape();s.moveTo(-w/2,0);s.lineTo(0,h);s.lineTo(w/2,0);s.closePath();const m=new T.Mesh(new T.ExtrudeGeometry(s,{depth:d,bevelEnabled:false}),mat(c));m.position.set(x,y,z-d/2);m.castShadow=true;g.add(m)}
+function label(g,txt,x,y,z){const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#e7dfca';ctx.fillRect(0,0,512,128);ctx.fillStyle='#33342f';ctx.font='bold 66px serif';ctx.textAlign='center';ctx.fillText(txt,256,88);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const m=new T.Mesh(new T.PlaneGeometry(10,2.5),new T.MeshBasicMaterial({map:tex}));m.position.set(x,y,z);g.add(m)}
+// Historical facade study: NCL 001_001_0000361247 and TCMB 110000015898.
+function arch(g,x,y,z,w,h,c,depth=.24){const r=w/2, sh=new T.Shape();sh.moveTo(-r,0);sh.lineTo(r,0);sh.lineTo(r,h-r);sh.absarc(0,h-r,r,0,Math.PI,false);sh.lineTo(-r,0);const m=new T.Mesh(new T.ExtrudeGeometry(sh,{depth,bevelEnabled:false,curveSegments:20}),mat(c));m.position.set(x,y,z);g.add(m);return m}
+function framedArch(g,x,y,z,w,h){arch(g,x,y-.18,z,w+.42,h+.36,0xe3ded0);arch(g,x,y,z+.26,w,h,0x354448,.16);box(g,x,y,z+.45,.12,h-.32,.10,0x8d9389);box(g,x,y+h*.48,z+.45,w,.10,.10,0x8d9389)}
+function clock(g,x,y,z,modern){const dial=new T.Mesh(new T.CircleGeometry(.85,48),mat(0xeee7d5));dial.position.set(x,y,z);g.add(dial);for(let k=0;k<12;k++){let a=k*Math.PI/6;box(g,x+Math.sin(a)*.69,y+Math.cos(a)*.69-.055,z+.03,.08,.11,.06,0x494b44)}const hand=box(g,x,y,z+.08,.09,.61,.07,0x333631);hand.position.y=y+.2;const h2=box(g,x+.17,y-.05,z+.09,.48,.08,.07,0x333631);if(modern) {box(g,x,y-.33,z+.17,2.1,.66,.12,0x252c2b);}}
+function station(i){const g=new T.Group();if(i===0){box(g,0,0,0,48,5.5,15,0xd7c9a8);roof(g,0,5.5,0,51,17,4,0x4c514b);for(let x=-23;x<=23;x+=.75)box(g,x,.3,7.56,.055,5.1,.07,0x9d9176);for(let x=-20;x<=20;x+=5){box(g,x,1.1,7.68,2.3,2.8,.18,0x3e4943);box(g,x,2.45,7.9,2.3,.12,.10,0xb6a788);box(g,x,0,9,.28,4.3,.3,0x8b745a)}box(g,0,0,9,7,4.5,2,0xddd0b6);roof(g,0,4.5,9,9,5,2,0x514e46);label(g,'臺南驛',0,5.2,11.6)}else{const wall=i===2?0xbdb7a4:0xd0cabb;box(g,0,0,0,68,10.8,20,wall);box(g,0,0,5,30,13.8,15,wall);box(g,0,13.8,5,31,.55,16,0xaaa391);box(g,0,10.8,0,69,.48,21,0xbab3a3);
+for(let x of [-26,-20,-14,14,20,26]){framedArch(g,x,1.25,10.02,2.5,3.8);framedArch(g,x,6.25,10.02,2.4,3.5)}
+for(let k=-3;k<=3;k++)framedArch(g,k*3.45,7.1,12.52,2.15,4.65);
+for(let k=-1;k<=1;k++)framedArch(g,k*7.4,.28,12.52,4.7,5.8);
+for(let x of [-11.2,-3.8,3.8,11.2]){box(g,x,0,12.9,1.05,11.7,.66,0xdcd6c6);for(let y of [.15,.45,.75,11.45,11.75])box(g,x,y,13,1.42,.20,.88,0xe5decc)}
+box(g,0,6.35,12.85,30,.33,.55,0xdad3c1);box(g,0,12.5,12.85,30,.4,.65,0xe2dbcc);
+clock(g,0,12.9,13.22,i>=3);label(g,i===1?'臺南驛':'臺南車站',0,15,12.9);box(g,0,0,16,32,.25,7,0xa8a49b);
+box(g,0,0,-17,58,6,14,wall);box(g,0,6,-17,60,.45,15,0x92978f);
+for(let x of [-34.1,34.1])for(let z of [-7,0,7]){const side=box(g,x,6,z,.12,2.4,2.2,0x53605b);}
+}
+if(i===4){box(g,47,0,-8,25,3,30,0x999f9d);box(g,47,3,-8,27,.5,32,0xd8d9ce);for(let x=36;x<60;x+=6)box(g,x,0,7,.5,3,.5,0x484d4d);label(g,'地下站示意',47,4.8,8.3)}return g}
+const world=new T.Group();scene.add(world);box(world,0,-.4,0,800,.4,800,0xaaa690);const groups=[];let seed=53;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+for(let i=0;i<eras.length;i++){const g=station(i);groups.push(g);world.add(g);box(g,0,.02,37,105,.15,45,i<2?0xb2a58b:0x929493);box(g,0,.01,73,650,.14,15,0x666b68);box(g,-65,.01,0,13,.14,650,0x666b68);if(i<4){for(let x of [-7,-3,1,5]){box(g,x,.04,-35,.12,.13,44,0x464743)}for(let z=-56;z<-13;z+=1.5)box(g,-1,.03,z,16,.12,.35,0x786857);box(g,14,0,-35,7,.6,45,0xb4b0a3);box(g,14,4,-35,8,.25,43,0x777b75)}seed=53;for(let side of [-1,1])for(let k=0;k<18;k++){let x=side*(82+(k%3)*19),z=-130+Math.floor(k/3)*43;let h=4+rand()*(i<2?6:18);box(g,x,0,z,12,h,15,i<2?0xb69a79:0xc3bca9);if(i<2)roof(g,x,h,z,13,16,2,0x57534a);for(let y=1.5;y<h-1;y+=3)for(let a=-4;a<=4;a+=4)box(g,x+a,y,z+7.55,1.4,1.6,.15,0x505a55)}for(let k=0;k<10;k++){const x=(k<5?-1:1)*(46+(k%5)*8),z=48+(k%5)*3;box(g,x,0,z,.6,4,.6,0x685743);const t=new T.Mesh(new T.SphereGeometry(3.7,10,8),mat(0x64784c));t.position.set(x,5,z);t.castShadow=true;g.add(t)}enrich(g,i,{box,mat,label,roof});g.visible=false}
+const detailLoader=new GLTFLoader();
+for(const [file,targets] of [['tainan-timber-porch',[0]],['tainan-hotel-gallery',[1,2,3,4]]]){
+ detailLoader.load('models/'+file+'.glb',({scene:detail})=>{
+   detail.rotation.y=Math.PI;
+   detail.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true});
+   for(const i of targets)groups[i].add(detail.clone());
+ },undefined,()=>{$('story').insertAdjacentText('afterend',' 站房細部模型未載入。')});
+}
+let modernContext=null;
+loadModernContext().then(g=>{modernContext=g;world.add(g);g.visible=current===4;$('status').textContent='現代 OSM 街廓已載入｜站房及歷史年代仍為示意';}).catch(()=>{$('status').textContent='OSM 資料尚未提供｜使用示意街廓';});
+let current=0;function setEra(i){current=Math.max(0,Math.min(4,i));groups.forEach((g,j)=>g.visible=j===current);if(modernContext)modernContext.visible=current===4;$('story').textContent=eras[current][0]+'｜'+eras[current][1]+'：'+eras[current][2];[...$('eras').children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===current)))}
+eras.forEach((e,i)=>{const b=document.createElement('button');b.textContent=e[0]+' '+e[1];b.onclick=()=>setEra(i);$('eras').append(b)});
+const shots=[[0,12,100],[90,25,95],[120,140,160],[85,28,-95]];function setShot(i){camera.position.set(...shots[i]);controls.target.set(0,5,0);controls.update()}
+function climate(){const h=+$('hour').value,w=$('weather').value,a=Math.sin((h-6)/24*Math.PI*2),day=Math.max(0,a);$('clock').value=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.round(h%1*60)).padStart(2,'0');sun.position.set(Math.cos((h-6)/24*Math.PI*2)*160,Math.max(4,day*180),80);sun.intensity=(.08+day*3)*(w==='clear'?1:.45);hemi.intensity=.25+day*1.6;const sky=new T.Color(0x18243b).lerp(new T.Color(w==='clear'?0xb6d2df:0x9da8ac),Math.min(1,day*3));scene.background=sky;setNight(groups,day<.15);scene.fog=new T.FogExp2(scene.background,w==='fog'?.013:w==='rain'?.006:.0015)}
+const rainGeo=new T.BufferGeometry(),rp=new Float32Array(1500*6);for(let i=0;i<rp.length;i+=6){let x=(rand()-.5)*300,y=rand()*80,z=(rand()-.5)*300;rp.set([x,y,z,x-.12,y+1.3,z],i)}rainGeo.setAttribute('position',new T.BufferAttribute(rp,3));const rain=new T.LineSegments(rainGeo,new T.LineBasicMaterial({color:0xb9d2de,transparent:true,opacity:.45}));scene.add(rain);
+$('hour').oninput=climate;$('weather').onchange=climate;$('shot').onchange=()=>setShot(+$('shot').value);$('photo').onclick=()=>{renderer.render(scene,camera);canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tainan-'+eras[current][0]+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)})};$('share').onclick=async()=>{const u=new URL(location.href);u.searchParams.set('era',current);u.searchParams.set('t',$('hour').value);u.searchParams.set('w',$('weather').value);u.searchParams.set('shot',$('shot').value);try{await navigator.clipboard.writeText(u.href);$('status').textContent='已複製網址'}catch{$('status').textContent=u.href}};
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();if(q.has('t')&&Number.isFinite(+q.get('t')))$('hour').value=q.get('t');if(['clear','cloudy','rain','fog'].includes(q.get('w')))$('weather').value=q.get('w');let sh=Number(q.get('shot'));if(!Number.isInteger(sh)||sh<0||sh>3)sh=0;$('shot').value=sh;setShot(sh);let e=Number(q.get('era'));setEra(q.has('era')&&Number.isInteger(e)&&e>=0&&e<5?e:1);climate();$('status').textContent='歷史數位重建示意｜非測繪模型';renderer.setAnimationLoop(()=>{controls.update();rain.visible=$('weather').value==='rain';if(rain.visible){for(let i=0;i<rp.length;i+=6){rp[i+1]-=.7;rp[i+4]-=.7;if(rp[i+1]<0){rp[i+1]+=80;rp[i+4]+=80}}rainGeo.attributes.position.needsUpdate=true}renderer.render(scene,camera)});
