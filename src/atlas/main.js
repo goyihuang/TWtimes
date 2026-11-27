@@ -215,7 +215,7 @@ function setupLayerControls() {
     if (on && state.swipe != null) document.querySelector('.swipe-line').style.left = (state.swipe * 100) + '%';
   };
   $('basemap').onchange = e => { state.base = e.target.value; mapApi?.setBasemap(state.base); writeHash(); };
-  $('history').onchange = e => { state.hist = e.target.value || null; mapApi?.setHistory(state.hist); sync(); writeHash(); };
+  $('history').onchange = e => { state.hist = e.target.value || null; mapApi?.setHistory(state.hist); sync(); writeHash(); const n = HISTORY_LAYERS.find(h => h.id === state.hist)?.note; if (n) toast(n); };
   $('opacity').oninput = e => { state.op = +e.target.value; mapApi?.setOpacity(state.op); writeHash(); };
   $('swipeOn').onchange = e => { state.swipe = e.target.checked ? +$('swipe').value : null; mapApi?.setSwipe(state.swipe); sync(); writeHash(); };
   $('swipe').oninput = e => { state.swipe = +e.target.value; $('swipeOn').checked = true; mapApi?.setSwipe(state.swipe); sync(); writeHash(); };

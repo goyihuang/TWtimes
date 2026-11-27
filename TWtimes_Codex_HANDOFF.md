@@ -238,11 +238,11 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 **實測（雲端容器 Chromium，vite preview 的 dist）**
 - 地圖首頁：根目錄轉址、22 縣市輪廓、群聚標記、搜尋（台中車站→臺中驛、臺灣神社→圓山）、Enter 選第一筆、多標籤 AND/OR、預覽卡入口連結、歷史圖層選擇與古今滑桿裁切、網址重開還原、進入 3D 後返回保留選取與視角、圖鑑 18 張卡、時間軸年代篩選、手機 390×844 底部面板與預覽卡，皆通過，無 JS 錯誤、無本站 404。
 - 回歸：`?place=station／river／market／changhua／roundhouse／taipei&generation=2／kaohsiung／tainan`、騎樓分享網址、`#era=1935` 轉 taichung-1935、`taichung-1935.html`、`?place=yuanshan`、`yuanshan.html`、`tainan.html?era=0&shot=4`、`taipei.html` 皆正常。
-- **未實測**：容器連不到圖磚伺服器（NLSC、OSM、中研院），所以底圖與歷史圖磚的實際顯示、對位、各圖層縮放上限尚未看過；圖磚網址格式已依 GetCapabilities 核對（例：`…file-exists.php?img=JM20K_1904-jpg-15-27325-14231`）。須在可上網的瀏覽器或部署後確認。
+- 圖磚：容器連不到圖磚伺服器，改在使用者電腦的 Claude 內建瀏覽器實測。底圖兩種和 9 個中研院圖層都載得到，疊在臺南、臺中、臺北站區時位置吻合；依實測結果為每個圖層設定 `maxNativeZoom`（詳見 `docs/atlas.md`）。完整 map.html 在實機上的畫面要等上線後確認。
 - 截圖：`docs/atlas/*.jpg`。
 
 **下一步**
-1. 上線後在實機確認三種底圖與 9 個歷史圖層；不顯示或對位偏移的圖層從 `layers.js` 移除或調整 `maxNativeZoom`。
+1. 上線後在實機打開 map.html 做最後確認（圖層本身已實測）。
 2. 補新竹、嘉義、鹿港座標（OSM 或官方資料）。
 3. 新竹車站可作為下一個場景（使用者已有 `G:\Ai Data\今昔\新竹` 素材）；完成後在 registry 把 `status` 改 `live` 並填 `entry`、`thumbnail`。
 4. 主題「城門城牆」、清領時期全臺圖層目前空缺。

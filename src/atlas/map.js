@@ -94,7 +94,7 @@ export function createMap(el, { onSelect, onCounty, onView }) {
     const def = HISTORY_LAYERS.find(h => h.id === id);
     if (def) {
       historyId = def.id;
-      history = L.tileLayer(def.url, { pane: 'history', opacity, attribution: HISTORY_ATTRIBUTION, errorTileUrl: BLANK, maxZoom: 18, maxNativeZoom: 17, crossOrigin: false });
+      history = L.tileLayer(def.url, { pane: 'history', opacity, attribution: HISTORY_ATTRIBUTION, errorTileUrl: BLANK, maxZoom: 18, maxNativeZoom: def.maxNativeZoom || 16 });
       history.addTo(map);
     }
     clip();
