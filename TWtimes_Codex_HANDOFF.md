@@ -222,3 +222,27 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 3. 行人、車輛、列車為低多邊形示意；可再以 Blender 製作年代車種。
 4. 實機 GPU（桌機與手機）效能尚未量測。
 5. 臺南達標並經使用者同意後才合併 main 部署；之後依第 7 節做全臺 MAP V2。
+
+## 16. 2026-11-28 全臺 MAP V2（Claude Code，分支 `claude/project-thread-mjz9a1`）
+**起點**：main `1bd5383`（臺南 PR #6 已合併並上線）。本輪只新增地圖首頁，未改動任何既有場景程式。
+
+**本次修改**
+- 新頁 `map.html`＋`src/atlas/`（main／map／search／layers／atlas.css），Vite input 已加入。根目錄 `./` 不帶查詢與 hash 時轉到 `map.html`；`?place=…`、`#era=…` 等既有分享網址照舊。街景首頁頁首加「全臺地圖」連結。
+- 地景資料庫 `public/data/scene-registry.json`：10 處已上線（臺中驛、臺中 1935、綠川、第一市場、彰化驛、彰化機關庫、臺北五代、圓山劍潭、臺南驛前、高雄驛）＋ 8 處候選（新竹、基隆、嘉義、臺南州廳、打狗驛、花蓮、臺東舊站、鹿港龍山寺）。欄位依第 7 節，另加 `types/themes/buildingStatus/coordSource/extra`。座標：上線者取自 repo 內 OSM 資料，候選者取自 Wikipedia；新竹、嘉義、鹿港查不到可靠座標，填 null（只在圖鑑，不上地圖）。
+- 縮圖 `public/thumbs/*.jpg`：全部是本專案場景實際畫面（5 張本輪 Playwright 擷取舊年代，其餘取自既有 scene-*.jpg、docs/tainan、圓山截圖）。
+- 縣市界 `public/data/tw-counties.geo.json`（內政部開放資料，`scripts/build-counties.mjs` 可重製）。
+- 新依賴：leaflet 1.9.4（BSD-2）、leaflet.markercluster 1.5.3（MIT）。搜尋自寫，未用 Fuse.js。
+- 中研院歷史圖層 9 種、透明度、古今滑桿；授權查證：CC BY-NC，商業使用須另取授權（詳 `docs/atlas.md`）。
+- `npm test`：`tests/atlas-search.test.mjs`（資料庫完整性＋搜尋／篩選行為）。
+
+**實測（雲端容器 Chromium，vite preview 的 dist）**
+- 地圖首頁：根目錄轉址、22 縣市輪廓、群聚標記、搜尋（台中車站→臺中驛、臺灣神社→圓山）、Enter 選第一筆、多標籤 AND/OR、預覽卡入口連結、歷史圖層選擇與古今滑桿裁切、網址重開還原、進入 3D 後返回保留選取與視角、圖鑑 18 張卡、時間軸年代篩選、手機 390×844 底部面板與預覽卡，皆通過，無 JS 錯誤、無本站 404。
+- 回歸：`?place=station／river／market／changhua／roundhouse／taipei&generation=2／kaohsiung／tainan`、騎樓分享網址、`#era=1935` 轉 taichung-1935、`taichung-1935.html`、`?place=yuanshan`、`yuanshan.html`、`tainan.html?era=0&shot=4`、`taipei.html` 皆正常。
+- **未實測**：容器連不到圖磚伺服器（NLSC、OSM、中研院），所以底圖與歷史圖磚的實際顯示、對位、各圖層縮放上限尚未看過；圖磚網址格式已依 GetCapabilities 核對（例：`…file-exists.php?img=JM20K_1904-jpg-15-27325-14231`）。須在可上網的瀏覽器或部署後確認。
+- 截圖：`docs/atlas/*.jpg`。
+
+**下一步**
+1. 上線後在實機確認三種底圖與 9 個歷史圖層；不顯示或對位偏移的圖層從 `layers.js` 移除或調整 `maxNativeZoom`。
+2. 補新竹、嘉義、鹿港座標（OSM 或官方資料）。
+3. 新竹車站可作為下一個場景（使用者已有 `G:\Ai Data\今昔\新竹` 素材）；完成後在 registry 把 `status` 改 `live` 並填 `entry`、`thumbnail`。
+4. 主題「城門城牆」、清領時期全臺圖層目前空缺。
