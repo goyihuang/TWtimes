@@ -1,103 +1,281 @@
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// 臺南驛前：五年代立體街景引擎（Three.js）。UI 由 platform.js 接到首頁共用框架。
 import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { loadModernContext } from './osm.js';
-import { enrich, setNight } from './art.js';
-const $=id=>document.getElementById(id), q=new URLSearchParams(location.search);
-const eras=[['1920','第一代木造臺南驛','1900 年初代站房；木造外觀為初步推估。'],['1936','第二代臺南驛','1936 年新站落成，二樓曾設鐵道飯店。'],['1970','戰後府城','歷史站房與戰後商業街景；周邊為推估。'],['2019','地下化前','保留舊站與地面鐵道的示意。'],['2026','地下車站啟用','2026 年 10 月 17 日新地下站啟用；新站及地面配置尚待測繪。']];
-const canvas=$('scene'), renderer=new T.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=T.ACESFilmicToneMapping;
-const scene=new T.Scene(), camera=new T.PerspectiveCamera(44,1,.2,2200), controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;controls.minDistance=5;controls.maxDistance=700;
-const hemi=new T.HemisphereLight(0xe2edff,0x82705b,2), sun=new T.DirectionalLight(0xffe2ba,3);scene.add(hemi,sun);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-180,right:180,top:180,bottom:-180,far:700});sun.shadow.bias=-.0005;
-const mats=new Map();function mat(c){if(!mats.has(c))mats.set(c,new T.MeshStandardMaterial({color:c,roughness:.82}));return mats.get(c)}
-function box(g,x,y,z,w,h,d,c){const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat(c));m.position.set(x,y+h/2,z);m.castShadow=m.receiveShadow=true;g.add(m);return m}
-function roof(g,x,y,z,w,d,h,c){const s=new T.Shape();s.moveTo(-w/2,0);s.lineTo(0,h);s.lineTo(w/2,0);s.closePath();const m=new T.Mesh(new T.ExtrudeGeometry(s,{depth:d,bevelEnabled:false}),mat(c));m.position.set(x,y,z-d/2);m.castShadow=true;g.add(m)}
-function label(g,txt,x,y,z){const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#e7dfca';ctx.fillRect(0,0,512,128);ctx.fillStyle='#33342f';ctx.font='bold 66px serif';ctx.textAlign='center';ctx.fillText(txt,256,88);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const m=new T.Mesh(new T.PlaneGeometry(10,2.5),new T.MeshBasicMaterial({map:tex}));m.position.set(x,y,z);g.add(m)}
-// Historical facade study: NCL 001_001_0000361247 and TCMB 110000015898.
-function arch(g,x,y,z,w,h,c,depth=.24){const r=w/2, sh=new T.Shape();sh.moveTo(-r,0);sh.lineTo(r,0);sh.lineTo(r,h-r);sh.absarc(0,h-r,r,0,Math.PI,false);sh.lineTo(-r,0);const m=new T.Mesh(new T.ExtrudeGeometry(sh,{depth,bevelEnabled:false,curveSegments:20}),mat(c));m.position.set(x,y,z);g.add(m);return m}
-function framedArch(g,x,y,z,w,h){arch(g,x,y-.18,z,w+.42,h+.36,0xe3ded0);arch(g,x,y,z+.26,w,h,0x354448,.16);box(g,x,y,z+.45,.12,h-.32,.10,0x8d9389);box(g,x,y+h*.48,z+.45,w,.10,.10,0x8d9389)}
-function clock(g,x,y,z,modern){const dial=new T.Mesh(new T.CircleGeometry(.85,48),mat(0xeee7d5));dial.position.set(x,y,z);g.add(dial);for(let k=0;k<12;k++){let a=k*Math.PI/6;box(g,x+Math.sin(a)*.69,y+Math.cos(a)*.69-.055,z+.03,.08,.11,.06,0x494b44)}const hand=box(g,x,y,z+.08,.09,.61,.07,0x333631);hand.position.y=y+.2;const h2=box(g,x+.17,y-.05,z+.09,.48,.08,.07,0x333631);if(modern) {box(g,x,y-.33,z+.17,2.1,.66,.12,0x252c2b);}}
-function station(i){const g=new T.Group();if(i===0){box(g,0,0,0,48,5.5,15,0xd7c9a8);roof(g,0,5.5,0,51,17,4,0x4c514b);for(let x=-23;x<=23;x+=.75)box(g,x,.3,7.56,.055,5.1,.07,0x9d9176);for(let x=-20;x<=20;x+=5){box(g,x,1.1,7.68,2.3,2.8,.18,0x3e4943);box(g,x,2.45,7.9,2.3,.12,.10,0xb6a788);box(g,x,0,9,.28,4.3,.3,0x8b745a)}box(g,0,0,9,7,4.5,2,0xddd0b6);roof(g,0,4.5,9,9,5,2,0x514e46);label(g,'臺南驛',0,5.2,11.6)}else{const wall=i===2?0xbdb7a4:0xd0cabb;box(g,0,0,0,68,10.8,20,wall);box(g,0,0,5,30,13.8,15,wall);box(g,0,13.8,5,31,.55,16,0xaaa391);box(g,0,10.8,0,69,.48,21,0xbab3a3);
-for(let x of [-26,-20,-14,14,20,26]){framedArch(g,x,1.25,10.02,2.5,3.8);framedArch(g,x,6.25,10.02,2.4,3.5)}
-for(let k=-3;k<=3;k++)framedArch(g,k*3.45,7.1,12.52,2.15,4.65);
-for(let k=-1;k<=1;k++)framedArch(g,k*7.4,.28,12.52,4.7,5.8);
-for(let x of [-11.2,-3.8,3.8,11.2]){box(g,x,0,12.9,1.05,11.7,.66,0xdcd6c6);for(let y of [.15,.45,.75,11.45,11.75])box(g,x,y,13,1.42,.20,.88,0xe5decc)}
-box(g,0,6.35,12.85,30,.33,.55,0xdad3c1);box(g,0,12.5,12.85,30,.4,.65,0xe2dbcc);
-clock(g,0,12.9,13.22,i>=3);if(i===1){
- // Front and oblique completion photographs show a shaded projecting entrance and a raised end bay.
- box(g,0,5.85,15.7,24,.36,6.3,0xc6bdab);
- const face=new T.Shape();face.moveTo(-12,0);face.lineTo(0,1.32);face.lineTo(12,0);face.closePath();
- const pediment=new T.Mesh(new T.ExtrudeGeometry(face,{depth:.28,bevelEnabled:false}),mat(0xd6cebb));
- pediment.position.set(0,6.20,18.56);g.add(pediment);
- for(const x of [-2.7,-2,-1.3]){const medallion=new T.Mesh(new T.CircleGeometry(.32,20),mat(0x655f51));medallion.position.set(x+2,6.63,18.86);g.add(medallion)}
- box(g,24,10.8,1.4,5.1,3.2,5,0xcfc7b5);box(g,24,14,1.4,5.65,.35,5.55,0x918c7c);
- framedArch(g,24,11.4,3.92,1.15,1.9);
-}else label(g,'臺南車站',0,15,12.9);box(g,0,0,16,32,.25,7,0xa8a49b);
-box(g,0,0,-17,58,6,14,wall);box(g,0,6,-17,60,.45,15,0x92978f);
-for(let x of [-34.1,34.1])for(let z of [-7,0,7]){const side=box(g,x,6,z,.12,2.4,2.2,0x53605b);}
-}
-if(i===4){box(g,47,0,-8,25,3,30,0x999f9d);box(g,47,3,-8,27,.5,32,0xd8d9ce);for(let x=36;x<60;x+=6)box(g,x,0,7,.5,3,.5,0x484d4d);label(g,'地下站示意',47,4.8,8.3)}return g}
-const world=new T.Group();scene.add(world);box(world,0,-.4,0,800,.4,800,0xaaa690);const groups=[];let seed=53;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-// Historical platform spacing is interpretive; the tracks run along the rear facade.
-const stoneMap=new T.TextureLoader().load('textures/brushed_concrete_03.jpg');
-stoneMap.colorSpace=T.SRGBColorSpace;stoneMap.wrapS=stoneMap.wrapT=T.RepeatWrapping;stoneMap.repeat.set(32,1);
-mat(0xa69b85).map=stoneMap;
-mat(0x646d65).emissive.setHex(0x31352f);
-function addPlatforms(g){
- for(const z of [-30,-43]){
-   for(const offset of [-.5335,.5335])box(g,0,.13,z+offset,142,.13,.08,0x514e49);
-   for(let x=-70;x<=70;x+=1.15)box(g,x,.02,z,.19,.13,2.05,0x766451);
- }
- for(const z of [-26,-37]){
-   box(g,0,0,z,132,.76,5.4,0xa69b85);
-   for(const edge of [-2.54,2.54])box(g,0,.76,z+edge,132,.07,.24,0xd3cbb6);
-   for(const side of [-1,1]){
-     const sheet=box(g,0,4.96,z+side*1.66,134,.15,3.4,0x646d65);
-     sheet.rotation.x=side*.095;
-   }
-   for(let x=-60;x<=60;x+=7.5){
-     box(g,x,.76,z,.17,4.38,.21,0x60645c);
-     for(const side of [-1,1]){
-       const brace=box(g,x,3.62,z+side*.75,.13,1.95,.15,0x5e655d);
-       brace.rotation.x=side*.86;
-     }
-   }
- }
-}
-// Submit identical material boxes together, including sleepers, frames and facade masonry.
-function batchBoxes(group){
- const batches=new Map();
- for(const mesh of [...group.children]){
-   if(mesh.geometry?.type!=='BoxGeometry'||mesh.userData.lamp)continue;
-   const {width,height,depth}=mesh.geometry.parameters;
-   mesh.updateMatrix();
-   if(!batches.has(mesh.material))batches.set(mesh.material,[]);
-   batches.get(mesh.material).push(mesh.matrix.clone().scale(new T.Vector3(width,height,depth)));
-   group.remove(mesh);mesh.geometry.dispose();
- }
- const unit=new T.BoxGeometry();
- for(const [material,matrices] of batches){
-   const batch=new T.InstancedMesh(unit,material,matrices.length);
-   matrices.forEach((m,i)=>batch.setMatrixAt(i,m));batch.castShadow=batch.receiveShadow=true;group.add(batch);
- }
-}
-for(let i=0;i<eras.length;i++){const g=station(i);groups.push(g);world.add(g);box(g,0,.02,37,105,.15,45,i<2?0xb2a58b:0x929493);box(g,0,.01,73,650,.14,15,0x666b68);box(g,-65,.01,0,13,.14,650,0x666b68);if(i<4)addPlatforms(g);seed=53;for(let side of [-1,1])for(let k=0;k<18;k++){let x=side*(82+(k%3)*19),z=-130+Math.floor(k/3)*43;let h=4+rand()*(i<2?6:18);box(g,x,0,z,12,h,15,i<2?0xb69a79:0xc3bca9);if(i<2)roof(g,x,h,z,13,16,2,0x57534a);for(let y=1.5;y<h-1;y+=3)for(let a=-4;a<=4;a+=4)box(g,x+a,y,z+7.55,1.4,1.6,.15,0x505a55)}for(let k=0;k<10;k++){const x=(k<5?-1:1)*(46+(k%5)*8),z=48+(k%5)*3;box(g,x,0,z,.6,4,.6,0x685743);const t=new T.Mesh(new T.SphereGeometry(3.7,10,8),mat(0x64784c));t.position.set(x,5,z);t.castShadow=true;g.add(t)}enrich(g,i,{box,mat,label,roof});batchBoxes(g);g.visible=false}
-const detailLoader=new GLTFLoader();
-for(const [file,targets] of [['tainan-timber-porch',[0]],['tainan-hotel-gallery',[1,2,3,4]]]){
- detailLoader.load('models/'+file+'.glb',({scene:detail})=>{
-   detail.rotation.y=Math.PI;
-   detail.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true});
-   for(const i of targets)groups[i].add(detail.clone());
- },undefined,()=>{$('story').insertAdjacentText('afterend',' 站房細部模型未載入。')});
-}
-let modernContext=null;
-loadModernContext().then(g=>{modernContext=g;world.add(g);g.visible=current===4;$('status').textContent='現代 OSM 街廓已載入｜站房及歷史年代仍為示意';}).catch(()=>{$('status').textContent='OSM 資料尚未提供｜使用示意街廓';});
-let current=0;function setEra(i){current=Math.max(0,Math.min(4,i));groups.forEach((g,j)=>g.visible=j===current);if(modernContext)modernContext.visible=current===4;$('story').textContent=eras[current][0]+'｜'+eras[current][1]+'：'+eras[current][2];[...$('eras').children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===current)))}
-eras.forEach((e,i)=>{const b=document.createElement('button');b.textContent=e[0]+' '+e[1];b.onclick=()=>setEra(i);$('eras').append(b)});
-const shots=[[0,12,100],[90,25,95],[120,140,160],[85,28,-95],[18,3.1,35],[53,2.45,-24.6]];function setShot(i){camera.position.set(...shots[i]);controls.target.set(...(i===5?[8,2.25,-34.5]:i===4?[0,5.5,14]:[0,5,0]));controls.update()}
-function climate(){const h=+$('hour').value,w=$('weather').value,a=Math.sin((h-6)/24*Math.PI*2),day=Math.max(0,a);$('clock').value=String(Math.floor(h)).padStart(2,'0')+':'+String(Math.round(h%1*60)).padStart(2,'0');sun.position.set(Math.cos((h-6)/24*Math.PI*2)*160,Math.max(4,day*180),80);sun.intensity=(.08+day*3)*(w==='clear'?1:.45);hemi.intensity=.25+day*1.6;const sky=new T.Color(0x18243b).lerp(new T.Color(w==='clear'?0xb6d2df:0x9da8ac),Math.min(1,day*3));scene.background=sky;setNight(groups,day<.15);scene.fog=new T.FogExp2(scene.background,w==='fog'?.013:w==='rain'?.006:.0015)}
-const rainGeo=new T.BufferGeometry(),rp=new Float32Array(1500*6);for(let i=0;i<rp.length;i+=6){let x=(rand()-.5)*300,y=rand()*80,z=(rand()-.5)*300;rp.set([x,y,z,x-.12,y+1.3,z],i)}rainGeo.setAttribute('position',new T.BufferAttribute(rp,3));const rain=new T.LineSegments(rainGeo,new T.LineBasicMaterial({color:0xb9d2de,transparent:true,opacity:.45}));scene.add(rain);
-$('hour').oninput=climate;$('weather').onchange=climate;$('shot').onchange=()=>setShot(+$('shot').value);$('photo').onclick=()=>{renderer.render(scene,camera);canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tainan-'+eras[current][0]+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)})};$('share').onclick=async()=>{const u=new URL(location.href);u.searchParams.set('era',current);u.searchParams.set('t',$('hour').value);u.searchParams.set('w',$('weather').value);u.searchParams.set('shot',$('shot').value);try{await navigator.clipboard.writeText(u.href);$('status').textContent='已複製網址'}catch{$('status').textContent=u.href}};
-function resize(){const {width,height}=canvas.getBoundingClientRect();renderer.setSize(width,height,false);camera.aspect=width/Math.max(1,height);camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();if(q.has('t')&&Number.isFinite(+q.get('t')))$('hour').value=q.get('t');if(['clear','cloudy','rain','fog'].includes(q.get('w')))$('weather').value=q.get('w');let sh=Number(q.get('shot'));if(!Number.isInteger(sh)||sh<0||sh>=shots.length)sh=0;$('shot').value=sh;setShot(sh);let e=Number(q.get('era'));setEra(q.has('era')&&Number.isInteger(e)&&e>=0&&e<5?e:1);climate();$('status').textContent='歷史數位重建示意｜非測繪模型';renderer.setAnimationLoop(()=>{controls.update();rain.visible=$('weather').value==='rain';if(rain.visible){for(let i=0;i<rp.length;i+=6){rp[i+1]-=.7;rp[i+4]-=.7;if(rp[i+1]<0){rp[i+1]+=80;rp[i+4]+=80}}rainGeo.attributes.position.needsUpdate=true}renderer.render(scene,camera)});
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { Post } from '../yuanshan/post.js';
+import { ERAS, SHOTS, mmToFov } from './eras.js';
+import { loadOSM } from './osm.js';
+import { buildEra, PLATFORMS } from './scenery.js';
+import { signTexture, canvasTex, cloudTex, rng } from './kit.js';
 
-new ResizeObserver(resize).observe(canvas);
-export {renderer,scene,camera,controls,eras,setEra,setShot};
+const LAT = 22.997 * Math.PI / 180, ANG = Math.atan2(84 * 111320 * Math.cos(LAT), 452 * 110540);
+// 太陽方向（本地座標）：hour 為當地時刻，decl 太陽赤緯（度）
+function sunDir(hour, decl = 8) {
+  const d = decl * Math.PI / 180, H = (hour - 12) * 15 * Math.PI / 180;
+  const sinE = Math.sin(LAT) * Math.sin(d) + Math.cos(LAT) * Math.cos(d) * Math.cos(H), E = Math.asin(sinE);
+  let A = Math.acos(Math.max(-1, Math.min(1, (Math.sin(d) - Math.sin(E) * Math.sin(LAT)) / (Math.cos(E) * Math.cos(LAT))))); if (H > 0) A = 2 * Math.PI - A;
+  const de = Math.sin(A) * Math.cos(E), dn = Math.cos(A) * Math.cos(E);
+  return { v: new T.Vector3(-dn * Math.cos(ANG) - de * Math.sin(ANG), Math.sin(E), dn * Math.sin(ANG) - de * Math.cos(ANG)).normalize(), elev: E * 180 / Math.PI };
+}
+// 站房、門廊與兩翼的碰撞盒（漫步模式）
+const SOLIDS = [[-27, 24.2, -17.3, 14.3], [-13.8, 5.8, 14, 23], [-37, 32.5, -6.5, 6.5], [-180, 180, -21.2, -17.2]];
+
+export async function createTainan(canvas, ui = {}) {
+  const status = ui.status || (() => {});
+  const lowEnd = matchMedia('(max-width: 760px)').matches || (navigator.hardwareConcurrency || 8) <= 4;
+  let renderer;
+  try { renderer = new T.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' }); }
+  catch (e) { status('此裝置無法啟用 WebGL，請開啟瀏覽器硬體加速後重新整理。'); throw e; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, lowEnd ? 1.25 : 1.75));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFShadowMap;
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
+  const scene = new T.Scene(), camera = new T.PerspectiveCamera(mmToFov(35), 1, 0.3, 6000);
+  const controls = new OrbitControls(camera, canvas); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 2; controls.maxDistance = 900;
+  const post = new Post(renderer, scene, camera, lowEnd ? 'low' : 'high');
+
+  // ── 天空、光源、雲 ──
+  const sky = new Sky(); sky.scale.setScalar(5000); scene.add(sky);
+  const su = sky.material.uniforms; su.mieDirectionalG.value = 0.8;
+  const sun = new T.DirectionalLight(0xfff1dc, 3); sun.castShadow = true; sun.shadow.mapSize.set(lowEnd ? 2048 : 4096, lowEnd ? 2048 : 4096);
+  Object.assign(sun.shadow.camera, { left: -140, right: 140, top: 140, bottom: -140, near: 10, far: 900 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; sun.shadow.radius = 3;
+  scene.add(sun, sun.target);
+  const hemi = new T.HemisphereLight(0xcfe0f2, 0x8a7a62, 0.6); scene.add(hemi);
+  const pmrem = new T.PMREMGenerator(renderer); const envScene = new T.Scene(); const envSky = new Sky(); envSky.scale.setScalar(1000); envScene.add(envSky);
+  let envRT = null;
+  const clouds = new T.Mesh(new T.PlaneGeometry(6000, 6000), new T.MeshBasicMaterial({ map: cloudTex, transparent: true, depthWrite: false, fog: false, opacity: 0.5 }));
+  cloudTex.repeat.set(3, 3); clouds.rotation.x = Math.PI / 2; clouds.position.y = 700; scene.add(clouds);
+  // 夜間站前暖光（真實光源，數量受限以顧效能）
+  const porchLights = [[-4, 4.2, 24.5, 30], [-14, 4, 26, 18], [6, 4, 26, 18], [-4, 9.5, 40, 40]].map(([x, y, z, d]) => { const l = new T.PointLight(0xffc98a, 0, d, 1.6); l.position.set(x, y, z); scene.add(l); return l; });
+
+  // ── 雨 ──
+  const RN = lowEnd ? 2500 : 6000, rainPos = new Float32Array(RN * 6), rr = rng(5);
+  for (let i = 0; i < RN; i++) { const x = (rr() - 0.5) * 120, y = rr() * 50, z = (rr() - 0.5) * 120; rainPos.set([x, y, z, x + 0.05, y + 0.9, z + 0.03], i * 6); }
+  const rainGeo = new T.BufferGeometry(); rainGeo.setAttribute('position', new T.BufferAttribute(rainPos, 3));
+  const rain = new T.LineSegments(rainGeo, new T.LineBasicMaterial({ color: 0xc8d6de, transparent: true, opacity: 0.42, fog: false })); rain.frustumCulled = false; rain.visible = false; scene.add(rain);
+
+  // ── 資產 ──
+  status('載入站房模型與街廓資料…');
+  const gltf = new GLTFLoader(); const load = f => gltf.loadAsync('models/' + f).then(x => x.scene).catch(() => null);
+  const [m1936, m1900, canopy, osm] = await Promise.all([load('tainan-1936.glb'), load('tainan-1900.glb'), load('tainan-canopy.glb'), loadOSM().catch(() => null)]);
+  const warn = [];
+  if (!m1936 || !m1900) warn.push('站房模型未載入');
+  if (!osm) warn.push('OSM 街廓未載入，周邊以空地顯示');
+  if (canopy) canopy.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+
+  const glassMats = [], stationWet = [], clockFaces = [];
+  function stationFor(era) {
+    const src = era.station === '1900' ? m1900 : m1936; if (!src) return new T.Group();
+    const s = src.clone(true); const swap = new Map();
+    s.traverse(o => {
+      if (!o.isMesh) return; o.castShadow = o.receiveShadow = true;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const out = mats.map(m => {
+        if (!swap.has(m)) {
+          const c = m.clone();
+          if (c.name === 'tn_tile' && era.skin === 'paint') { c.color.set(era.id === '1970' ? 0xe9e3d2 : 0xf1efe8); c.map = null; c.roughness = 0.82; }
+          if (c.name === 'tn_trim' && era.skin === 'paint') c.color.set(0xf6f4ee);
+          if (c.name === 'tn_plinth' && era.skin === 'paint') c.color.set(era.id === '1970' ? 0xbab3a2 : 0xd2cfc6);
+          if (/glass/.test(c.name)) { c.emissive = new T.Color(0xffc887); c.emissiveMap = c.map; c.emissiveIntensity = 0; c.envMapIntensity = 1.4; glassMats.push(c); }
+          if (/tile|trim|plinth|kawara|roof/.test(c.name)) stationWet.push({ m: c, rough: c.roughness, color: c.color.clone() });
+          swap.set(m, c);
+        }
+        return swap.get(m);
+      });
+      o.material = Array.isArray(o.material) ? out : out[0];
+    });
+    const grp = new T.Group(); grp.add(s);
+    if (era.sign === '1970') {
+      const b = new T.Mesh(new T.BoxGeometry(13, 1.9, 0.3), new T.MeshStandardMaterial({ map: signTexture('臺南車站', { w: 1024, h: 150, font: '900 120px serif', fg: '#9b1c1c', bg: '#f3efe3' }), roughness: 0.6 }));
+      b.position.set(-4, 16.0, 14.4); grp.add(b);
+    }
+    if (era.sign === '2019') {
+      const chars = ['台', '南', '車', '站'];
+      chars.forEach((ch, i) => { const m = new T.Mesh(new T.BoxGeometry(2.2, 2.2, 0.5), new T.MeshStandardMaterial({ map: signTexture(ch, { fg: '#1f4fa8' }), emissiveMap: signTexture(ch, { fg: '#1f4fa8' }), emissive: 0xffffff, emissiveIntensity: 0, roughness: 0.5 })); m.position.set(-4 + (i - 1.5) * 5.6, 16.6, 13.6); grp.add(m); glassMats.push(m.material); m.material.userData.sign = true; });
+      const logo = new T.Mesh(new T.BoxGeometry(1.9, 1.9, 0.5), new T.MeshStandardMaterial({ map: signTexture('㊣', { fg: '#1f4fa8', font: '900 150px sans-serif' }) })); logo.position.set(-17.2, 16.4, 13.6); grp.add(logo);
+      const en = new T.Mesh(new T.BoxGeometry(3.2, 1.6, 0.5), new T.MeshStandardMaterial({ map: signTexture('TAINAN STATION', { w: 512, h: 256, fg: '#1f4fa8', font: '900 64px sans-serif' }) })); en.position.set(9.2, 16.3, 13.6); grp.add(en);
+      const clkTex = canvasTex(256, 96, () => {}); clockFaces.push(clkTex);
+      const clk = new T.Mesh(new T.BoxGeometry(4.8, 1.6, 0.6), new T.MeshStandardMaterial({ color: 0x111111, emissive: 0xff3a2a, emissiveIntensity: 0.8, emissiveMap: clkTex }));
+      clk.position.set(-4, 12.6, 14.9); grp.add(clk);
+      const pole = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 6), new T.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.7 })); pole.position.set(-4, 18, 8); grp.add(pole);
+    }
+    if (era.scaffold) grp.add(scaffold());
+    return grp;
+  }
+  function scaffold() {
+    // 修復停擺期間的鷹架與帆布（依 2024 新聞稿照片：主體包覆、門廊外露）
+    const g = new T.Group(), parts = [], pole = new T.CylinderGeometry(0.05, 0.05, 1, 6);
+    const boxes = [[-20.4, 12.4, -17.9, 14.9, 16.6], [12.4, 24.9, -17.9, 6.3, 12.2], [-27.6, -20.4, -17.9, 3.1, 12.2]];
+    const sheetTex = canvasTex(256, 256, (c) => { c.fillStyle = '#eef0ee'; c.fillRect(0, 0, 256, 256); c.strokeStyle = 'rgba(120,130,130,.45)'; c.lineWidth = 2; for (let k = 0; k <= 256; k += 32) { c.beginPath(); c.moveTo(k, 0); c.lineTo(k, 256); c.moveTo(0, k); c.lineTo(256, k); c.stroke(); } });
+    sheetTex.repeat.set(1, 1);
+    const sheet = new T.MeshStandardMaterial({ map: sheetTex, transparent: true, opacity: 0.86, roughness: 0.6, side: T.DoubleSide });
+    const ms = [];
+    for (const [x0, x1, z0, z1, h] of boxes) {
+      for (const [ax, az, bx, bz] of [[x0, z1, x1, z1], [x1, z0, x1, z1], [x0, z0, x0, z1], [x0, z0, x1, z0]]) {
+        const L = Math.hypot(bx - ax, bz - az), n = Math.round(L / 1.8);
+        for (let k = 0; k <= n; k++) { const t = k / n; ms.push(new T.Matrix4().compose(new T.Vector3(ax + (bx - ax) * t, h / 2, az + (bz - az) * t), new T.Quaternion(), new T.Vector3(1, h, 1))); }
+        const p = new T.Mesh(new T.PlaneGeometry(L, h - 2.6), sheet); p.position.set((ax + bx) / 2, 2.6 + (h - 2.6) / 2, (az + bz) / 2); p.rotation.y = Math.atan2(-(bz - az), bx - ax); p.castShadow = true; g.add(p);
+        sheet.map.repeat.set(L / 4, h / 4);
+        const tin = new T.Mesh(new T.PlaneGeometry(L, 2.6), new T.MeshStandardMaterial({ color: 0x8fa3a0, metalness: 0.5, roughness: 0.5, side: T.DoubleSide })); tin.position.set((ax + bx) / 2, 1.3, (az + bz) / 2); tin.rotation.y = p.rotation.y; tin.castShadow = true; g.add(tin);
+      }
+    }
+    const im = new T.InstancedMesh(pole, new T.MeshStandardMaterial({ color: 0x7d8486, metalness: 0.7, roughness: 0.4 }), ms.length); ms.forEach((m, i) => im.setMatrixAt(i, m)); g.add(im);
+    return g;
+  }
+
+  // ── 年代群組 ──
+  const eras = ERAS.map(era => {
+    const s = buildEra(era, osm, { canopy });
+    const st = stationFor(era); s.group.add(st); s.group.visible = false; scene.add(s.group); return s;
+  });
+
+  // ── 狀態 ──
+  const state = { era: 1, hour: 15.5, weather: 'clear', mm: 35, walk: false, night: 0 };
+  let fade = 0, fadeTarget = 0, pendingEra = null;
+  function applyEra(i) {
+    eras.forEach((e, j) => e.group.visible = j === i); state.era = i;
+    post.setGrade(ERAS[i].grade); climate(); ui.onEra?.(i);
+  }
+  function setEra(i, animate = true) {
+    i = Math.max(0, Math.min(ERAS.length - 1, i | 0));
+    if (!animate || i === state.era) { applyEra(i); return; }
+    pendingEra = i; fadeTarget = 1;
+  }
+
+  function climate() {
+    const { v, elev } = sunDir(state.hour), w = state.weather;
+    const day = T.MathUtils.smoothstep(elev, -6, 8), golden = 1 - T.MathUtils.smoothstep(elev, 4, 30);
+    const overcast = w === 'rain' ? 1 : w === 'cloudy' ? 0.6 : w === 'fog' ? 0.5 : 0;
+    state.night = 1 - day;
+    // 天空
+    for (const u of [su, envSky.material.uniforms]) {
+      u.sunPosition.value.copy(v).multiplyScalar(1000); u.turbidity.value = 3 + overcast * 6;
+      u.rayleigh.value = 1.2 + golden * 1.4 - overcast * 0.9; u.mieCoefficient.value = 0.004 + overcast * 0.004; u.mieDirectionalG.value = 0.78;
+    }
+    // 光源
+    const sunCol = new T.Color().setHSL(0.09 - golden * 0.04, 0.6 + golden * 0.3, 0.9 - golden * 0.18);
+    sun.color.copy(sunCol); sun.intensity = Math.max(0, day * (2.5 - golden * 0.7) * (1 - overcast * 0.82));
+    sun.position.copy(v).multiplyScalar(400).add(new T.Vector3(-4, 0, 10)); sun.target.position.set(-4, 0, 10);
+    hemi.intensity = 0.1 + day * (0.3 + overcast * 0.55); hemi.color.setHSL(0.58, 0.45 * day + 0.2, 0.55 + day * 0.25); hemi.groundColor.setHSL(0.09, 0.25, 0.18 + day * 0.28);
+    if (!day) { hemi.color.set(0x324a78); }
+    renderer.toneMappingExposure = 0.62 + day * 0.18 + (1 - day) * 0.3;
+    // 霧與雲
+    const fogCol = new T.Color().setHSL(0.58 - golden * 0.5 * day, 0.15 + 0.1 * day, 0.08 + day * (0.62 - overcast * 0.12));
+    if (golden > 0.5 && day > 0.2) fogCol.lerp(new T.Color(0xd9b48c), (golden - 0.5) * 0.6);
+    if (day < 0.5) fogCol.lerp(new T.Color(0x0d1524), 1 - day * 2);
+    if (w === 'fog') fogCol.lerp(new T.Color(0xc9ced0), day * 0.6);
+    sky.visible = w !== 'fog' && w !== 'rain'; scene.background = sky.visible ? null : fogCol;
+    scene.fog = new T.FogExp2(fogCol, w === 'fog' ? 0.0062 : w === 'rain' ? 0.0045 : w === 'cloudy' ? 0.0016 : 0.0008);
+    clouds.material.opacity = (0.25 + overcast * 0.6) * (0.25 + day * 0.75); clouds.material.color.setHSL(0.6, 0.05, 0.25 + day * 0.7 - overcast * 0.25);
+    // 夜間：窗光、路燈、店招
+    const n = state.night, e = eras[state.era];
+    for (const { m, k, kind } of e.nightMats) m.emissiveIntensity = kind === 'window' ? n * k * (0.55 + 0.45 * overcast) : kind === 'bulb' ? 0.08 + n * k : n * k;
+    for (const m of e.glows) m.opacity = n * 0.85;
+    for (const m of glassMats) m.emissiveIntensity = m.userData.sign ? n * 0.6 : n * 0.55;
+    porchLights.forEach((l, i) => l.intensity = n * (i === 3 ? 45 : 22));
+    // 雨天濕面：降低粗糙度、壓暗底色，讓天空與燈光倒映
+    const wet = w === 'rain' ? 1 : w === 'fog' ? 0.3 : 0;
+    for (const { m, rough, color } of [...e.wetMats, ...stationWet]) { m.roughness = rough * (1 - wet * 0.72); m.color.copy(color).multiplyScalar(1 - wet * 0.32); }
+    rain.visible = w === 'rain';
+    post.bloom.strength = 0.08 + n * 0.28; post.bloom.threshold = 3.0 - n * 1.6; post.bloom.radius = 0.45;
+    const gu = post.grade.uniforms; gu.uSunVis.value = 0;
+    for (const t of clockFaces) { const g = t.image.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 256, 96); g.fillStyle = '#fff'; g.font = '900 72px monospace'; g.textAlign = 'center'; g.fillText(String(Math.floor(state.hour)).padStart(2, '0') + ':' + String(Math.round(state.hour % 1 * 60)).padStart(2, '0'), 128, 74); t.needsUpdate = true; }
+    updateEnv();
+  }
+  let envTimer = 0; function updateEnv() { clearTimeout(envTimer); envTimer = setTimeout(() => { envRT?.dispose(); envRT = pmrem.fromScene(envScene, 0.02); scene.environment = envRT.texture; scene.environmentIntensity = 0.05 + (1 - state.night) * 0.12; }, 60); }
+
+  // ── 鏡位、焦距 ──
+  function setFocal(mm) { state.mm = mm; camera.fov = mmToFov(mm); camera.updateProjectionMatrix(); }
+  function setShot(i) { const s = SHOTS[i]; if (!s) return; exitWalk(); state.shot = i; camera.position.set(...s.pos); controls.target.set(...s.target); setFocal(s.mm); controls.update(); ui.onShot?.(i); }
+
+  // ── 漫步（WASD／方向鍵、拖曳轉向；手機左半拖曳前進、右半轉向）──
+  const keys = new Set(); let yaw = 0, pitch = 0, drag = null, stick = null;
+  function groundAt(x, z) { for (const p of PLATFORMS) if (ERAS[state.era].rail && z > p.z0 && z < p.z1 && x > -95 && x < 75) return p.h; return 0; }
+  function enterWalk() {
+    state.walk = true; controls.enabled = false;
+    const d = new T.Vector3().subVectors(controls.target, camera.position); yaw = Math.atan2(d.x, d.z); pitch = 0;
+    if (camera.position.y > 3) { const p = controls.target.clone().add(new T.Vector3(0, 0, 18)); camera.position.set(p.x, 0, p.z); }
+    camera.position.y = groundAt(camera.position.x, camera.position.z) + 1.65; ui.onWalk?.(true);
+  }
+  function exitWalk() { if (!state.walk) return; state.walk = false; controls.enabled = true; const f = new T.Vector3(Math.sin(yaw), 0, Math.cos(yaw)); controls.target.copy(camera.position).addScaledVector(f, 12); controls.update(); ui.onWalk?.(false); }
+  addEventListener('keydown', e => { if (state.walk && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { keys.add(e.key.toLowerCase()); if (e.key.startsWith('Arrow')) e.preventDefault(); } });
+  addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+  canvas.addEventListener('pointerdown', e => { if (!state.walk) return; canvas.setPointerCapture(e.pointerId); const r = canvas.getBoundingClientRect(); if (e.pointerType === 'touch' && e.clientX - r.left < r.width / 2) stick = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, dy: 0 }; else drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+  canvas.addEventListener('pointermove', e => { if (stick && e.pointerId === stick.id) { stick.dx = (e.clientX - stick.x) / 60; stick.dy = (e.clientY - stick.y) / 60; } else if (drag && e.pointerId === drag.id) { yaw -= (e.clientX - drag.x) * 0.004; pitch = Math.max(-1.2, Math.min(1.2, pitch - (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; } });
+  const endPtr = e => { if (stick?.id === e.pointerId) stick = null; if (drag?.id === e.pointerId) drag = null; };
+  canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+  function walkStep(dt) {
+    let f = 0, s = 0; const run = keys.has('shift') ? 2.2 : 1;
+    if (keys.has('w') || keys.has('arrowup')) f += 1; if (keys.has('s') || keys.has('arrowdown')) f -= 1;
+    if (keys.has('a')) s -= 1; if (keys.has('d')) s += 1;
+    if (keys.has('arrowleft') || keys.has('q')) yaw += dt * 1.6; if (keys.has('arrowright') || keys.has('e')) yaw -= dt * 1.6;
+    if (stick) { f -= Math.max(-1, Math.min(1, stick.dy)); s += Math.max(-1, Math.min(1, stick.dx)); }
+    const sp = 4.2 * run * dt, fx = Math.sin(yaw), fz = Math.cos(yaw);
+    let x = camera.position.x + (fx * f - fz * s) * sp, z = camera.position.z + (fz * f + fx * s) * sp;
+    for (const [x0, x1, z0, z1] of SOLIDS) if (x > x0 - 0.4 && x < x1 + 0.4 && z > z0 - 0.4 && z < z1 + 0.4) {
+      if (ERAS[state.era].rail === false && z0 === -21.2) continue;
+      const dx = Math.min(x - (x0 - 0.4), x1 + 0.4 - x), dz = Math.min(z - (z0 - 0.4), z1 + 0.4 - z);
+      if (dx < dz) x = x - (x0 - 0.4) < x1 + 0.4 - x ? x0 - 0.4 : x1 + 0.4; else z = z - (z0 - 0.4) < z1 + 0.4 - z ? z0 - 0.4 : z1 + 0.4;
+    }
+    x = Math.max(-500, Math.min(500, x)); z = Math.max(-300, Math.min(520, z));
+    const gy = groundAt(x, z) + 1.65; camera.position.set(x, camera.position.y + (gy - camera.position.y) * Math.min(1, dt * 8), z);
+    camera.lookAt(x + Math.sin(yaw) * Math.cos(pitch), camera.position.y + Math.sin(pitch), z + Math.cos(yaw) * Math.cos(pitch));
+  }
+
+  // ── 尺寸、渲染迴圈 ──
+  function resize() { const { width, height } = canvas.getBoundingClientRect(); if (!width || !height) return; renderer.setSize(width, height, false); post.setSize(width, height, renderer.getPixelRatio()); camera.aspect = width / height; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(canvas); resize();
+  const clock = new T.Clock(); let time = 0;
+  function frame() {
+    const dt = Math.min(0.05, clock.getDelta()); time += dt;
+    if (state.walk) walkStep(dt); else controls.update();
+    // 年代轉場：淡出 → 切換 → 淡入（鏡頭不動）
+    if (fadeTarget !== fade) { fade += Math.sign(fadeTarget - fade) * Math.min(Math.abs(fadeTarget - fade), dt * 4.5); if (fade >= 1 && pendingEra !== null) { applyEra(pendingEra); pendingEra = null; fadeTarget = 0; } }
+    post.grade.uniforms.uFade.value = fade * 0.92; post.grade.uniforms.uTime.value = time;
+    for (const m of eras[state.era].movers) m(dt);
+    if (rain.visible) { const p = rainGeo.attributes.position.array; for (let i = 0; i < p.length; i += 6) { p[i + 1] -= dt * 26; p[i + 4] -= dt * 26; if (p[i + 1] < 0) { p[i + 1] += 50; p[i + 4] += 50; } } rainGeo.attributes.position.needsUpdate = true; rain.position.set(camera.position.x, 0, camera.position.z); }
+    cloudTex.offset.x += dt * 0.0015;
+    post.composer.render(dt);
+  }
+  renderer.setAnimationLoop(frame);
+
+  // ── 拍攝、今昔並排、分享 ──
+  function snapshot() { post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
+  function compare(other) {
+    const cur = state.era; other = other ?? (cur >= 3 ? 1 : 3);
+    const fadeWas = post.grade.uniforms.uFade.value; post.grade.uniforms.uFade.value = 0;
+    const a = snapshot(); applyEra(other); const b = snapshot(); applyEra(cur); post.grade.uniforms.uFade.value = fadeWas;
+    const W = a.width, H = a.height, out = document.createElement('canvas'); out.width = W * 2 + 12; out.height = H + 64; const g = out.getContext('2d');
+    g.fillStyle = '#20342d'; g.fillRect(0, 0, out.width, out.height); g.drawImage(a, 0, 0); g.drawImage(b, W + 12, 0);
+    g.fillStyle = '#f3ead6'; g.font = `600 ${Math.round(H * 0.035)}px serif`; g.fillText(`${ERAS[cur].year} ${ERAS[cur].name}`, 20, H + 42); g.fillText(`${ERAS[other].year} ${ERAS[other].name}`, W + 32, H + 42);
+    g.textAlign = 'right'; g.font = `${Math.round(H * 0.022)}px sans-serif`; g.fillText('今昔街影・臺南驛前　歷史數位重建，非原始影像', out.width - 20, H + 42);
+    return { canvas: out, title: `${ERAS[cur].year} ↔ ${ERAS[other].year} · 臺南驛前` };
+  }
+  function shareURL() {
+    const u = new URL(location.href); const p = camera.position, t = state.walk ? camera.position.clone().add(new T.Vector3(Math.sin(yaw) * 5, Math.sin(pitch) * 5, Math.cos(yaw) * 5)) : controls.target;
+    u.searchParams.set('place', 'tainan'); u.searchParams.set('era', ERAS[state.era].id); u.searchParams.set('t', state.hour); u.searchParams.set('w', state.weather); u.searchParams.set('mm', state.mm);
+    u.searchParams.set('cam', [p.x, p.y, p.z, t.x, t.y, t.z].map(v => v.toFixed(1)).join(',')); if (state.walk) u.searchParams.set('walk', '1'); else u.searchParams.delete('walk'); u.searchParams.delete('shot');
+    return u.href;
+  }
+
+  // ── 初始狀態（分享參數）──
+  const q = new URLSearchParams(location.search);
+  const eraQ = q.get('era'), ei = ERAS.findIndex(e => e.id === eraQ); state.era = ei >= 0 ? ei : (/^\d$/.test(eraQ || '') ? Math.min(4, +eraQ) : 1);
+  if (q.has('t') && Number.isFinite(+q.get('t'))) state.hour = Math.max(0, Math.min(23.75, +q.get('t')));
+  if (['clear', 'cloudy', 'rain', 'fog'].includes(q.get('w'))) state.weather = q.get('w');
+  const shotQ = Number(q.get('shot')); setShot(Number.isInteger(shotQ) && shotQ >= 0 && shotQ < SHOTS.length ? shotQ : 0);
+  const cam = (q.get('cam') || '').split(',').map(Number);
+  if (cam.length === 6 && cam.every(Number.isFinite)) { camera.position.set(cam[0], cam[1], cam[2]); controls.target.set(cam[3], cam[4], cam[5]); controls.update(); }
+  if (Number(q.get('mm')) >= 14 && Number(q.get('mm')) <= 135) setFocal(Number(q.get('mm')));
+  applyEra(state.era);
+  if (q.get('walk') === '1') enterWalk();
+  status(warn.length ? warn.join('；') : `站房：Blender 重建（依館藏舊照）｜街廓：${osm?.source || 'OSM'}（${osm?.fetched || ''}）`);
+
+  return {
+    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state,
+    setEra, setShot, setFocal, compare, snapshot, shareURL,
+    setHour(h) { state.hour = h; climate(); }, setWeather(w) { state.weather = w; climate(); },
+    toggleWalk() { state.walk ? exitWalk() : enterWalk(); return state.walk; },
+    zoom(f) { if (state.walk) { setFocal(Math.max(14, Math.min(135, state.mm / f))); return; } camera.position.sub(controls.target).multiplyScalar(f).add(controls.target); controls.update(); },
+  };
+}

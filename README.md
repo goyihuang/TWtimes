@@ -92,10 +92,18 @@ python3 tools/blender/station1917.py   # 臺中驛（1917）
 python3 tools/blender/station2016.py   # 臺中車站（2016 高架新站）
 ```
 
-## 臺南驛前（開發中）
+## 臺南驛前
 
-`tainan.html`（或 `?place=tainan`）為五年代 Three.js 程序化原型，含環繞鏡頭、時刻、天氣、攝影與場景參數。初版街廓和站房為示意幾何，尚未接入 OSM 或考證 GLB，不可視為精確史實。2026 年 10 月 17 日地下站已啟用。
+首頁 `?place=tainan`（舊網址 `tainan.html` 會轉回首頁）。五個年代：1920 第一代木造站房、1936 第二代站房、1970 戰後、2019 地下化前、2026 地下站啟用。
 
-史料：[國家文化資產網](https://nchdb.boch.gov.tw/assets/overview/monument/19981218000001)、[鐵道局通車公告](https://www.rb.gov.tw/zh-TW/main/main_188/news/main_347/20261005_082504/)。
+- 站房：`tools/blender/tainan_station_1936.py`、`tainan_station_1900.py` 依館藏舊照以 Blender 建模，輸出 `public/models/tainan-1936.glb`、`tainan-1900.glb`、`tainan-canopy.glb`（月臺鋼軌雨棚單元）。模型直接使用站區本地座標，網頁端不需旋轉。
+- 街廓：`public/data/tainan-station.osm.json`（OSM，ODbL）。現代年代用實際外框與樓層；歷史年代只示意密度。
+- 程式：`src/tainan/main.js`（引擎）、`scenery.js`（各年代街景）、`eras.js`（年代、鏡位、依據）、`osm.js`、`kit.js`、`platform.js`（接首頁 UI）。
+- 功能：六鏡位、焦距、天氣（晴／雲／雨／晨霧）、時刻與太陽位置、夜間照明、雨天濕地、漫步（WASD／手機雙區觸控）、今昔並排、分享網址還原鏡頭。
+- 重建依據與可信度：[docs/tainan-evidence.md](docs/tainan-evidence.md)；實測截圖在 `docs/tainan/`。
+- 史料：[國家文化資產網](https://nchdb.boch.gov.tw/assets/overview/monument/19981218000001)、[鐵道局通車公告](https://www.rb.gov.tw/zh-TW/main/main_188/news/main_347/20261005_082504/)、[鐵道局 2026-10-19 新聞稿](https://www.rb.gov.tw/zh-TW/main/main_188/news/main_347/20261019_105610/)。
 
-後續：下載 OSM 資料、考證歷史街廓、依照片製作站房 GLB、整合步行及攝影功能、測試手機與其他場景。
+```bash
+python3 tools/blender/tainan_station_1936.py   # 1936 站房
+python3 tools/blender/tainan_station_1900.py   # 1900 站房 + 月臺雨棚
+```
