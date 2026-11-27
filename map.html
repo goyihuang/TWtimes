@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#243b35">
+<title>今昔街影｜全臺地景地圖</title>
+<meta name="description" content="臺灣歷史地景互動圖鑑：在全臺地圖上找到車站、神社、河岸與街區，疊上中研院百年歷史地圖，進入 3D 街景切換今昔。">
+</head>
+<body data-mode="map">
+<header class="a-top">
+  <a href="./map.html" class="brand"><span class="brand-mark">街</span><span>今昔街影<small>FORMOSA STREET ATLAS</small></span></a>
+  <nav class="modes" aria-label="瀏覽方式">
+    <button data-mode-tab="map" aria-pressed="true"><b>地圖</b><small>MAP</small></button>
+    <button data-mode-tab="atlas" aria-pressed="false"><b>圖鑑</b><small>ATLAS</small></button>
+    <button data-mode-tab="time" aria-pressed="false"><b>時間軸</b><small>TIME</small></button>
+  </nav>
+  <div class="a-stat"><span><b id="liveCount">–</b> 處已上線</span><span><b id="allCount">–</b> 處收錄</span></div>
+</header>
+
+<div class="a-body">
+  <aside class="panel" aria-label="搜尋與篩選">
+    <button class="sheet-handle" id="sheetHandle" aria-label="展開或收合清單"><i></i></button>
+    <form id="searchForm" class="search" role="search">
+      <label for="q" class="sr">搜尋地景</label>
+      <input id="q" type="search" placeholder="搜尋地名、舊名、別名…（按 / 聚焦）" autocomplete="off" enterkeyhint="search">
+      <button type="submit" aria-label="搜尋">⌕</button>
+    </form>
+    <div id="active" class="active-filters" aria-live="polite"></div>
+    <details class="filter-box" open>
+      <summary>多重標籤篩選</summary>
+      <div id="filters"></div>
+    </details>
+    <div class="result-head"><strong id="count"></strong><small id="countNote"></small></div>
+    <ol id="results" class="results"></ol>
+    <p class="credits">地景資料庫 <code>public/data/scene-registry.json</code>・縣市界 © 內政部（政府資料開放授權）・<a href="./?place=station">舊版街景首頁</a></p>
+  </aside>
+
+  <main class="stage">
+    <section class="view view-map" aria-label="全臺地圖">
+      <div id="map"></div>
+      <div class="swipe-line" hidden title="拖曳比較古今"><span>古</span><i></i><span>今</span></div>
+      <div class="map-tools">
+        <button id="layersBtn" aria-expanded="false" aria-controls="layerPanel">圖層・古地圖</button>
+        <div id="layerPanel" class="layer-panel" hidden>
+          <label>底圖<select id="basemap"></select></label>
+          <label>歷史圖層<select id="history"></select></label>
+          <div id="layerExtras" hidden>
+            <label>透明度<input id="opacity" type="range" min="0.1" max="1" step="0.05"></label>
+            <label class="row"><input id="swipeOn" type="checkbox"> 古今滑桿</label>
+            <input id="swipe" type="range" min="0" max="1" step="0.01" aria-label="古今分界位置">
+            <p class="fine">中央研究院「臺灣百年歷史地圖」，CC BY-NC 非商業授權。</p>
+          </div>
+        </div>
+      </div>
+      <article id="preview" class="preview" hidden aria-live="polite"></article>
+    </section>
+    <section class="view view-atlas" aria-label="地景圖鑑"><div id="atlasGrid" class="atlas-grid"></div></section>
+    <section class="view view-time" aria-label="年代時間軸"><div id="timeline" class="timeline"></div></section>
+    <p id="toast" class="a-toast" role="status" hidden></p>
+  </main>
+</div>
+<script type="module" src="./src/atlas/main.js"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#243b35"><title>今昔街影｜臺灣街景觀測所</title><meta name="description" content="走進臺北、臺中、彰化與高雄，在同一個視角切換今昔，收藏自己的街景攝影。"><link rel="stylesheet" href="style.css"><script>
 if (new URLSearchParams(location.search).get('place') === 'yuanshan') location.replace('yuanshan.html');
+// 網站首頁改為全臺地圖；帶 place／分享參數的舊網址仍直接開啟街景
+if (!location.search && !location.hash) location.replace('map.html');
 const sharedView = new URLSearchParams(location.hash.slice(1));
 if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) {
   location.replace('taichung-1935.html' + location.search + location.hash);
@@ -19,7 +21,7 @@ if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) {
 <symbol id="photo" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 3 2 4-5 5 6"/></symbol>
 <symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
 </defs></svg>
-<header><div class="wrap top"><a href="./" class="brand"><span class="brand-mark">街</span><span>今昔街影<small>FORMOSA STREET ATLAS</small></span></a><nav aria-label="主選單"><button class="nav-on" id="explore"><svg><use href="#layers"/></svg>街景探索</button><button id="notes"><svg><use href="#book"/></svg>時空手記</button><button id="gallery"><svg><use href="#photo"/></svg>我的攝影 <i id="count">0</i></button></nav></div></header>
+<header><div class="wrap top"><a href="./" class="brand"><span class="brand-mark">街</span><span>今昔街影<small>FORMOSA STREET ATLAS</small></span></a><nav aria-label="主選單"><a class="nav-map" href="./map.html"><svg><use href="#map"/></svg>全臺地圖</a><button class="nav-on" id="explore"><svg><use href="#layers"/></svg>街景探索</button><button id="notes"><svg><use href="#book"/></svg>時空手記</button><button id="gallery"><svg><use href="#photo"/></svg>我的攝影 <i id="count">0</i></button></nav></div></header>
 <main class="wrap"><div class="intro"><div><div class="eyebrow"><span class="line"></span>TAIWAN STREET OBSERVATORY</div><h1><span id="cityHeading">臺中舊城</span><span class="dot">.</span></h1><p>沿著舊城街廓，在同一個鏡位，遇見兩個時代。</p></div><div class="edition"><i></i> 臺灣街景觀測所 <span id="cityEn">TAICHUNG CITY · TAIWAN</span></div></div>
 <nav class="destination-bar" aria-label="切換街景地點"><div class="city-picker" role="group" aria-label="選擇城市"><button id="taichungCity" aria-pressed="true">臺中</button><button id="changhuaCity" aria-pressed="false">彰化</button><button id="taipeiCity" aria-pressed="false">臺北</button><button id="tainanCity" aria-pressed="false">臺南</button><button id="kaohsiungCity" aria-pressed="false">高雄</button></div><label>取景地點 <select id="destination"></select></label><a class="yuanshan-link" href="yuanshan.html" title="臺灣神社、明治橋到圓山大飯店的四個時代">圓山・劍潭　四時代 ↗</a></nav>
 <section class="workspace" aria-label="互動街景"><div class="viewer" id="viewer"><div id="stage" tabindex="0" aria-label="立體街景，拖曳環繞、滾輪縮放，方向鍵移動視角"></div><div class="scene-top"><div class="scene-info"><span class="live"><b></b> 立體街景</span><button id="plate" title="開啟這個街區的影像對照">對照原照 ↗</button></div><div class="viewer-actions"><button id="help" aria-label="操作說明" title="操作說明">?</button><button id="full" aria-label="全螢幕" title="全螢幕"><svg><use href="#expand"/></svg></button></div></div>
