@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "updated": "2026-11-28",
+  "note": "今昔街影地景資料庫。新增地景只要在 scenes 加一筆，地圖、圖鑑與時間軸會同步出現。座標未查證者填 null（只出現在圖鑑，不上地圖）。status：live 已上線、dev 開發中、planned 候選。entry 只填已存在的頁面。",
+  "taxonomy": {
+    "periods": [
+      { "id": "qing", "label": "清領", "en": "QING", "from": 1683, "to": 1894 },
+      { "id": "japanese", "label": "日治", "en": "JAPANESE ERA", "from": 1895, "to": 1945 },
+      { "id": "postwar", "label": "戰後", "en": "POSTWAR", "from": 1946, "to": 1999 },
+      { "id": "modern", "label": "現代", "en": "PRESENT", "from": 2000, "to": 2026 },
+      { "id": "future", "label": "未來規劃", "en": "FUTURE", "from": 2027, "to": 2100 }
+    ],
+    "types": ["車站", "鐵道設施", "河川水岸", "市場", "神社", "旅館", "公共建築", "宗教建築"],
+    "themes": ["臺灣鐵道百年", "消失的神社", "百貨與商業", "城門城牆", "港口", "公共建築"],
+    "buildingStatus": ["現存", "已拆除", "已改建", "遷移保存"],
+    "status": { "live": "已上線", "dev": "開發中", "planned": "候選地景" }
+  },
+  "scenes": [
+    {
+      "id": "taichung-station", "name": "臺中驛", "nameEn": "Taichū Station", "aliases": ["臺中車站", "台中火車站", "台中驛", "臺中舊站"],
+      "city": "臺中市", "district": "中區", "lat": 24.136911, "lng": 120.685256, "coordSource": "OSM（public/geodata.js）",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["日治建築", "紅磚站房", "高架化", "騎樓"],
+      "eras": [{ "year": "1930 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/taichung-station.jpg",
+      "summary": "1917 年落成的紅磚站房與 2016 年高架新站同框。可在站前廣場、高架入口、舊站近看與 1930 年代騎樓四種鏡位切換今昔，並用街屋工坊改樓層與外觀。",
+      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）；模型為本專案 Blender 依照片重建",
+      "entry": "./?place=station", "status": "live", "confidence": "B"
+    },
+    {
+      "id": "taichung-1935", "name": "臺中驛前 1935・天氣與日夜", "nameEn": "Taichū 1935 · Weather & Night", "aliases": ["臺中 1935", "中山路", "鈴蘭通", "新盛橋通"],
+      "city": "臺中市", "district": "中區", "lat": 24.13736, "lng": 120.68673, "coordSource": "OSM（src/viewpoints.js 景點）",
+      "types": ["車站", "河川水岸"], "themes": ["臺灣鐵道百年", "百貨與商業"], "buildingStatus": "現存", "tags": ["日治建築", "天氣", "日夜", "編輯街景", "宮原眼科", "臺中州廳"],
+      "eras": [{ "year": "1935", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/taichung-1935.jpg",
+      "summary": "臺中車站周邊街區的第一版原型：時光泡泡轉場、0–24 時太陽軌跡、晴雨霧天氣，可改街寬與樓層，存成拍攝場景。",
+      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "taichung-1935.html", "status": "live", "confidence": "C"
+    },
+    {
+      "id": "taichung-greenriver", "name": "綠川・新盛橋", "nameEn": "Green River · Shinsei Bridge", "aliases": ["綠川", "中山綠橋", "新盛橋", "宮原眼科"],
+      "city": "臺中市", "district": "中區", "lat": 24.137851, "lng": 120.68357, "coordSource": "OSM（public/geodata.js，宮原眼科）",
+      "types": ["河川水岸"], "themes": ["百貨與商業"], "buildingStatus": "已改建", "tags": ["日治建築", "橋梁", "水岸"],
+      "eras": [{ "year": "1930 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/taichung-greenriver.jpg",
+      "summary": "垂柳、卵石護岸與圓球欄杆的新盛橋，對照整治後的綠川水岸與宮原眼科。",
+      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "./?place=river", "status": "live", "confidence": "C"
+    },
+    {
+      "id": "taichung-market", "name": "第一市場", "nameEn": "First Market", "aliases": ["東協廣場", "第一廣場", "臺中第一市場"],
+      "city": "臺中市", "district": "中區", "lat": 24.139361, "lng": 120.683792, "coordSource": "OSM（public/geodata.js，東協廣場）",
+      "types": ["市場"], "themes": ["百貨與商業"], "buildingStatus": "已改建", "tags": ["日治建築", "市場"],
+      "eras": [{ "year": "1930 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/taichung-market.jpg",
+      "summary": "日治時期的第一市場街區，今日是東協廣場一帶。",
+      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "./?place=market", "status": "live", "confidence": "C"
+    },
+    {
+      "id": "changhua-station", "name": "彰化驛", "nameEn": "Shōka Station", "aliases": ["彰化車站", "彰化火車站", "彰化驛"],
+      "city": "彰化縣", "district": "彰化市", "lat": 24.081517, "lng": 120.538378, "coordSource": "OSM（public/changhua-map.js）",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "已改建", "tags": ["日治建築"],
+      "eras": [{ "year": "1930 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/changhua-station.jpg",
+      "summary": "彰化車站與站前廣場的今昔對照。",
+      "sources": [{ "label": "國立臺灣歷史博物館典藏", "url": "https://collections.nmth.gov.tw/CollectionContent.aspx?a=132&rno=2001.008.0929" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "./?place=changhua", "status": "live", "confidence": "C"
+    },
+    {
+      "id": "changhua-roundhouse", "name": "彰化機關庫", "nameEn": "Changhua Roundhouse", "aliases": ["彰化扇形車庫", "扇形車庫", "機關車庫"],
+      "city": "彰化縣", "district": "彰化市", "lat": 24.085564, "lng": 120.540182, "coordSource": "OSM（public/changhua-map.js）",
+      "types": ["鐵道設施"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["日治建築", "轉車臺", "蒸汽機車"],
+      "eras": [{ "year": "1930 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/changhua-roundhouse.jpg",
+      "summary": "臺灣僅存仍在使用的扇形車庫，轉車臺與十二股車庫線。",
+      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "./?place=roundhouse", "status": "live", "confidence": "C"
+    },
+    {
+      "id": "taipei-station", "name": "臺北車站・五代站房", "nameEn": "Taipei Main Station · Five Generations", "aliases": ["臺北車站", "台北車站", "臺北驛", "臺北停車場", "火車碼頭", "北車"],
+      "city": "臺北市", "district": "中正區", "lat": 25.047717, "lng": 121.517114, "coordSource": "OSM（public/taipei-map.js）",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "已拆除", "tags": ["清代鐵道", "劉銘傳", "館前路", "地下化"],
+      "eras": [{ "year": "1891", "period": "qing" }, { "year": "1901", "period": "japanese" }, { "year": "1941", "period": "japanese" }, { "year": "1986", "period": "postwar" }, { "year": "1989", "period": "postwar" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/taipei-station.jpg",
+      "summary": "從清代大稻埕火車碼頭、1901 紅磚停車場、1941 館前路站房，到 1989 年至今的中國宮殿式站房，五代站房依年代切換，另有影像對照頁。",
+      "sources": [{ "label": "國家文化記憶庫", "url": "https://tcmb.culture.tw/zh-tw/detail?id=463901&indexCode=Culture_Place" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "./?place=taipei", "extra": { "label": "五代影像對照", "href": "taipei.html" }, "status": "live", "confidence": "B"
+    },
+    {
+      "id": "yuanshan", "name": "圓山・劍潭 四時代", "nameEn": "Maruyama · Kentan", "aliases": ["圓山", "劍潭", "臺灣神社", "台灣神社", "臺灣神宮", "明治橋", "中山橋", "圓山大飯店", "臺灣八景"],
+      "city": "臺北市", "district": "中山區", "lat": 25.077333, "lng": 121.525783, "coordSource": "Wikipedia：Grand Hotel (Taipei)",
+      "types": ["神社", "旅館", "河川水岸"], "themes": ["消失的神社"], "buildingStatus": "已改建", "tags": ["臺灣八景", "橋梁", "基隆河", "宮殿式建築"],
+      "eras": [{ "year": "1901", "period": "japanese" }, { "year": "1933", "period": "japanese" }, { "year": "1952", "period": "postwar" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/yuanshan.jpg",
+      "summary": "臺灣神社與兩代明治橋、戰後臺灣大飯店，到 1973 年宮殿式圓山大飯店；基隆河與劍潭山的四個時代，含時刻、天氣與膠彩濾鏡。",
+      "sources": [{ "label": "Wikipedia：Grand Hotel (Taipei)", "url": "https://en.wikipedia.org/wiki/Taipei_Grand_Hotel" }],
+      "license": "程序化重建，未內嵌館藏影像",
+      "entry": "yuanshan.html", "status": "live", "confidence": "B"
+    },
+    {
+      "id": "tainan-station", "name": "臺南驛前・百年府城門戶", "nameEn": "Tainan Station", "aliases": ["臺南車站", "台南車站", "臺南驛", "台南火車站", "鐵道飯店"],
+      "city": "臺南市", "district": "東區", "lat": 22.997143, "lng": 120.212582, "coordSource": "OSM relation 6477070（src/tainan/osm.js）",
+      "types": ["車站", "旅館"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["日治建築", "鐵道飯店", "地下化", "鋼軌雨棚"],
+      "eras": [{ "year": "1920", "period": "japanese" }, { "year": "1936", "period": "japanese" }, { "year": "1970", "period": "postwar" }, { "year": "2019", "period": "modern" }, { "year": "2026", "period": "modern" }],
+      "thumbnail": "thumbs/tainan-station.jpg",
+      "summary": "第一代木造站房、1936 年第二代站房與鐵道飯店、戰後白牆、地下化前，到 2026 年地下站啟用。Blender 站房、六鏡位、天氣日夜與漫步。",
+      "sources": [{ "label": "交通部鐵道局 2026-10-19 新聞稿", "url": "https://www.rb.gov.tw/zh-TW/main/main_188/news/main_347/20261019_105610/" }, { "label": "重建依據表", "url": "https://github.com/goyihuang/TWtimes/blob/main/docs/tainan-evidence.md" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）；站房為本專案 Blender 模型",
+      "entry": "./?place=tainan", "status": "live", "confidence": "B"
+    },
+    {
+      "id": "kaohsiung-station", "name": "高雄驛", "nameEn": "Takao Station", "aliases": ["高雄車站", "高雄火車站", "帝冠式站房", "高雄願景館"],
+      "city": "高雄市", "district": "三民區", "lat": 22.63832, "lng": 120.30252, "coordSource": "OSM（public/kaohsiung-map.js）",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "遷移保存", "tags": ["日治建築", "帝冠式", "地下化"],
+      "eras": [{ "year": "1940 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": "thumbs/kaohsiung-station.jpg",
+      "summary": "1941 年帝冠式高雄驛與今日地下化後的站區。",
+      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）",
+      "entry": "./?place=kaohsiung", "status": "live", "confidence": "C"
+    },
+    {
+      "id": "hsinchu-station", "name": "新竹驛", "nameEn": "Shinchiku Station", "aliases": ["新竹車站", "新竹火車站"],
+      "city": "新竹市", "district": "東區", "lat": null, "lng": null, "coordSource": "待查",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["日治建築", "1913"],
+      "eras": [{ "year": "1913", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "1913 年啟用的歐式站房，臺灣現存最古老的車站建築之一。素材已在整理中。",
+      "sources": [{ "label": "Wikipedia：Hsinchu railway station", "url": "https://en.wikipedia.org/wiki/Hsinchu_TRA_station" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "keelung-station", "name": "基隆驛", "nameEn": "Kīrun Station", "aliases": ["基隆車站", "基隆火車站"],
+      "city": "基隆市", "district": "仁愛區", "lat": 25.1316, "lng": 121.7384, "coordSource": "Wikipedia：Keelung railway station",
+      "types": ["車站"], "themes": ["臺灣鐵道百年", "港口"], "buildingStatus": "已改建", "tags": ["港口", "縱貫線起點"],
+      "eras": [{ "year": "1908", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "縱貫線北端的港口車站，2015 年遷建南站。",
+      "sources": [{ "label": "Wikipedia：Keelung railway station", "url": "https://en.wikipedia.org/wiki/Keelung_railway_station" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "chiayi-station", "name": "嘉義驛", "nameEn": "Kagi Station", "aliases": ["嘉義車站", "嘉義火車站", "阿里山森林鐵路"],
+      "city": "嘉義市", "district": "西區", "lat": null, "lng": null, "coordSource": "待查",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["日治建築", "阿里山"],
+      "eras": [{ "year": "1933", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "縱貫線與阿里山森林鐵路交會的車站。",
+      "sources": [], "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "tainan-prefecture-hall", "name": "臺南州廳", "nameEn": "Tainan Prefecture Hall", "aliases": ["國立臺灣文學館", "台南州廳", "湯德章紀念公園", "大正公園"],
+      "city": "臺南市", "district": "中西區", "lat": 22.991667, "lng": 120.204444, "coordSource": "Wikipedia：National Museum of Taiwan Literature",
+      "types": ["公共建築"], "themes": ["公共建築"], "buildingStatus": "現存", "tags": ["日治建築", "國定古蹟", "森山松之助"],
+      "eras": [{ "year": "1916", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "1916 年落成的臺南州廳，今為國立臺灣文學館。",
+      "sources": [{ "label": "Wikipedia：National Museum of Taiwan Literature", "url": "https://en.wikipedia.org/wiki/National_Museum_of_Taiwan_Literature" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "takao-railway", "name": "打狗驛・哈瑪星", "nameEn": "Takao Railway · Hamasen", "aliases": ["打狗鐵道故事館", "舊高雄港站", "哈瑪星", "濱線"],
+      "city": "高雄市", "district": "鼓山區", "lat": 22.62167, "lng": 120.27639, "coordSource": "Wikipedia：Takao Railway Museum",
+      "types": ["車站", "鐵道設施"], "themes": ["臺灣鐵道百年", "港口"], "buildingStatus": "現存", "tags": ["日治建築", "濱線", "港口"],
+      "eras": [{ "year": "1940 年代", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "高雄港邊的打狗驛與哈瑪星濱線街區。",
+      "sources": [{ "label": "Wikipedia：Takao Railway Museum", "url": "https://en.wikipedia.org/wiki/Takao_Railway_Museum" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "hualien-railway", "name": "花蓮港廳鐵道部出張所", "nameEn": "Hualien Railway Culture Park", "aliases": ["花蓮鐵道文化園區", "舊花蓮車站", "花蓮港"],
+      "city": "花蓮縣", "district": "花蓮市", "lat": 23.974722, "lng": 121.610611, "coordSource": "Wikipedia：Hualien Railway Culture Park",
+      "types": ["鐵道設施", "公共建築"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["日治建築", "東部鐵道"],
+      "eras": [{ "year": "1932", "period": "japanese" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "1932 年的鐵道部花蓮港出張所，今為花蓮鐵道文化園區。",
+      "sources": [{ "label": "Wikipedia：Hualien Railway Culture Park", "url": "https://en.wikipedia.org/wiki/Hualien_Railway_Culture_Park" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "taitung-old-station", "name": "臺東舊站", "nameEn": "Old Taitung Station", "aliases": ["台東舊站", "臺東鐵道藝術村", "台東鐵道藝術村"],
+      "city": "臺東縣", "district": "臺東市", "lat": 22.753361, "lng": 121.145972, "coordSource": "Wikipedia：Taitung Railway Art Village",
+      "types": ["車站"], "themes": ["臺灣鐵道百年"], "buildingStatus": "現存", "tags": ["東部鐵道", "2001 停駛"],
+      "eras": [{ "year": "戰後", "period": "postwar" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "2001 年停駛的臺東舊站，今為鐵道藝術村。",
+      "sources": [{ "label": "Wikipedia：Taitung Railway Art Village", "url": "https://en.wikipedia.org/wiki/Taitung_Railway_Art_Village" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    },
+    {
+      "id": "lukang-longshan", "name": "鹿港龍山寺", "nameEn": "Lukang Longshan Temple", "aliases": ["鹿港", "龍山寺", "一府二鹿三艋舺"],
+      "city": "彰化縣", "district": "鹿港鎮", "lat": null, "lng": null, "coordSource": "待查",
+      "types": ["宗教建築"], "themes": ["港口"], "buildingStatus": "現存", "tags": ["清代建築", "國定古蹟", "港口"],
+      "eras": [{ "year": "1786", "period": "qing" }, { "year": "今", "period": "modern" }],
+      "thumbnail": null,
+      "summary": "1786 年遷建現址的清代寺廟，鹿港港市的見證。",
+      "sources": [{ "label": "Wikipedia：Longshan Temple (Lukang)", "url": "https://en.wikipedia.org/wiki/Longshan_Temple_(Lukang)" }],
+      "license": null, "entry": null, "status": "planned", "confidence": null
+    }
+  ]
+}

@@ -1,6 +1,13 @@
 # 今昔時空 TWtimes
 
-[進入臺灣街景觀測所](https://goyihuang.github.io/TWtimes/)可探索臺中、彰化、臺北、高雄共七處街景，切換今昔並攝影。也可直接開啟[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)與[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)。
+[進入全臺地景地圖](https://goyihuang.github.io/TWtimes/)：在臺灣地圖、圖鑑與時間軸上找到每一處地景，疊上中研院百年歷史地圖，再進入 3D 街景切換今昔。舊的街景首頁仍可用 `?place=` 直接開啟，例如[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)、[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)、[臺南驛前](https://goyihuang.github.io/TWtimes/?place=tainan)。
+
+## 全臺地圖首頁（map.html）
+
+- 地圖／圖鑑／時間軸三種瀏覽方式，共用搜尋與多重標籤篩選（縣市、類型、主題、年代、建築現況、完成狀態；同類任一、跨類全部）。
+- 搜尋支援臺／台、舊名與別名、羅馬拼音與模糊比對。
+- 中研院歷史圖層 9 種（1897–1956），可調透明度、用古今滑桿比對（CC BY-NC，限非商業）。
+- 地景資料在 `public/data/scene-registry.json`，新增一筆即同步出現在三種模式。細節見 [docs/atlas.md](docs/atlas.md)。
 
 ## 圓山・劍潭　四時代（臺灣八景）
 
@@ -44,6 +51,7 @@
 npm install
 npm run dev        # 本機預覽 http://localhost:5173
 npm run build      # 輸出到 dist/
+npm test           # 地景資料庫與搜尋測試
 npm run fetch-osm  # 重新下載臺中車站周邊 OSM 資料
 ```
 
