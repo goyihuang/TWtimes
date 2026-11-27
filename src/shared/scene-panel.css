@@ -1,0 +1,37 @@
+@import './tokens.css';
+/* 共用場景面板（以臺南為標準） */
+.sp{display:flex;flex-direction:column;gap:7px;margin:0 13px 10px;font-size:.86rem}
+.sp-head strong{font:700 1.02rem var(--serif);letter-spacing:.04em;display:block}
+.sp-head small{font:10px Georgia,serif;letter-spacing:2px;color:#7a8676}
+.sp-story{color:#33463c;line-height:1.55;font-size:.82rem}
+.sp-row{display:block}
+.sp-row[hidden],.sp-actions [hidden]{display:none!important}
+.sp-row select,.sp-row input[type=range]{display:block;width:100%;margin-top:3px}
+.sp-row select{font:inherit;padding:5px 6px;border:1px solid #a5ad9c;border-radius:var(--radius);background:#fff}
+.sp-row output{font-variant-numeric:tabular-nums;color:var(--muted);margin-left:4px}
+.sp-actions,.sp-toggles{display:flex;gap:var(--gap);flex-wrap:wrap}
+.sp-actions button,.sp-toggles button{flex:1 1 30%;font-size:.78rem;border:1px solid #a5ad9c;border-radius:var(--radius);background:transparent;color:#405344;padding:.42em .6em;white-space:nowrap}
+.sp-actions button:hover,.sp-toggles button:hover{border-color:var(--ink)}
+.sp-actions button[aria-pressed=true],.sp-toggles button[aria-pressed=true]{background:var(--ink);color:#faf7eb;border-color:var(--ink)}
+.sp-links a{display:block;font-size:.8rem;color:var(--rust);padding:2px 0}
+.sp-evidence{font-size:.78rem;line-height:1.45}
+.sp-evidence summary{cursor:pointer;font-weight:600}
+.sp-evidence td{padding:3px 4px;vertical-align:top;border-bottom:1px solid #ddd8c6}
+.sp-evidence td:nth-child(2){font-weight:700;color:var(--rust)}
+.sp-evidence .c-A{color:var(--conf-a)!important}.sp-evidence .c-B{color:var(--conf-b)!important}.sp-evidence .c-C{color:var(--conf-c)!important}
+.sp-note{color:#6b6a5e;font-size:.72rem}
+.sp-status{font-size:.74rem;color:var(--muted);min-height:1.2em}
+/* 年代列：沿用「時空切換」外框，多年代可橫向捲動 */
+.sp-eras{overflow-x:auto;max-width:100%;scrollbar-width:thin}
+.sp-eras button{white-space:nowrap}
+.sp-eras button b{font:700 14px var(--serif)}
+.sp-eras button span{font:12px var(--sans)}
+/* 有共用面板時，舊的場景專用按鈕收起 */
+.scene-panel-ready #stationLenses,.scene-panel-ready #taipeiLenses,.scene-panel-ready #tpGenerations{display:none!important}
+#walkHint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);background:#17221dd9;color:#f0e6cf;font-size:.78rem;padding:6px 12px;border-radius:4px;pointer-events:none;white-space:nowrap;z-index:3}
+/* 純畫面：只留下 3D 畫面 */
+.clean-view .scene-top,.clean-view .viewtools,.clean-view .view-caption,.clean-view .view-modes,.clean-view #walkControls{opacity:0;pointer-events:none;transition:opacity .25s}
+@media(max-width:760px){#walkHint{white-space:normal;width:90%;text-align:center}.sp{margin:0 7px 8px}.sp-actions button{flex-basis:45%}}
+/* 面板內容較多時，側欄可捲動 */
+.scene-panel-ready #browsePanel{overflow-y:auto;min-height:0;flex:1 1 auto;display:flex;flex-direction:column}
+.scene-panel-ready aside{min-height:0;overflow:hidden}
