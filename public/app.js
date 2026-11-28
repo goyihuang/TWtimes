@@ -231,7 +231,7 @@ const tainanOption=document.createElement('optgroup');tainanOption.label='臺南
 [...$('destination').querySelectorAll('optgroup')].find(g=>g.label==='臺北')?.append(new Option('圓山・劍潭','yuanshan'));
 $('tainanCity').onclick=()=>location.assign('?place=tainan');
 $('destination').onchange=e=>/^\d+$/.test(e.target.value)?browsePlace(Number(e.target.value)):location.assign('?place='+e.target.value);
-const MODULE_PLACES=['tainan','yuanshan'];
+const MODULE_PLACES=['tainan','yuanshan','osm'];
 if(!MODULE_PLACES.includes(new URLSearchParams(location.search).get('place'))){updateLabels();requestAnimationFrame(()=>setTimeout(start,0))}
 window.saveTainanPhoto=(canvas,title)=>{
  photos.unshift({id:Date.now(),title,image:canvas.toDataURL('image/jpeg',.86)});
