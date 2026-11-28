@@ -52,7 +52,8 @@ let boundKey = null;
 const api = {
   keepCaption: true, frameButtons: false,
   transitions: ['grow', 'cut'], get grow() { return window.eraGrow; }, THREE: window.THREE,
-  get scene() { return SA().scene; }, exportRoot: () => SA().currentWorld, redraw: () => SA().redraw(),
+  // 不提供匯出 GLB：npm 版 GLTFExporter 讀不了舊版 three 物件（缺 pivot），要等 app.js 改成 ES module
+  get scene() { return SA().scene; }, redraw: () => SA().redraw(),
   get spin() { return SA().spin; }, setSpin: v => SA().setSpin(v),
   get state() { const s = SA(); return { era: s.isTaipei ? (s.modern ? 4 : s.tpPast - 1) : (s.modern ? 1 : 0), shot: s.shot, mm: s.mm, walk: s.walking, hour: s.hour, weather: s.weather }; },
   weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '霧' },

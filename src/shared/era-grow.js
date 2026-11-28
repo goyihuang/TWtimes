@@ -21,10 +21,10 @@
 const STORE = 'tw-transition-v1';
 export const TRANSITION_MODES = { grow: '建物長出', fade: '淡出淡入', cut: '直接切換' };
 export const TRANSITION = (() => {
-  const t = { mode: 'grow', seconds: 2.6 };
+  const t = { mode: 'grow', seconds: 3.2 };
   try { Object.assign(t, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch { }
   if (!TRANSITION_MODES[t.mode]) t.mode = 'grow';
-  t.seconds = Math.max(0.6, Math.min(8, +t.seconds || 2.6));
+  t.seconds = Math.max(0.6, Math.min(8, +t.seconds || 3.2));
   try { if (matchMedia('(prefers-reduced-motion: reduce)').matches && !localStorage.getItem(STORE)) t.mode = 'cut'; } catch { }
   return t;
 })();
@@ -36,7 +36,7 @@ export function setTransition(patch) {
 if (typeof window !== 'undefined') window.TW_TRANSITION = TRANSITION;
 
 // 可改寫的材質：內建 Mesh*Material（都含 project_vertex 與 clipping_planes_fragment）
-const PATCHABLE = ['isMeshStandardMaterial', 'isMeshPhysicalMaterial', 'isMeshLambertMaterial', 'isMeshPhongMaterial', 'isMeshBasicMaterial', 'isMeshToonMaterial', 'isMeshMatcapMaterial', 'isMeshNormalMaterial', 'isMeshDepthMaterial', 'isMeshDistanceMaterial'];
+const PATCHABLE = ['isMeshStandardMaterial', 'isMeshPhysicalMaterial', 'isMeshLambertMaterial', 'isMeshPhongMaterial', 'isMeshBasicMaterial', 'isMeshToonMaterial', 'isMeshMatcapMaterial', 'isMeshDepthMaterial', 'isMeshDistanceMaterial'];
 export const canPatch = m => !!m && !m.isShaderMaterial && PATCHABLE.some(k => m[k]);
 
 const GLSL = /* glsl */`
@@ -47,7 +47,8 @@ float gNoise(vec2 x){ vec2 i = floor(x), f = fract(x); f = f * f * (3. - 2. * f)
   return mix(mix(gHash(i), gHash(i + vec2(1, 0)), f.x), mix(gHash(i + vec2(0, 1)), gHash(i + vec2(1, 1)), f.x), f.y); }
 // 這一點的「新年代到達度」0→1；距離經過壓縮，最遠處也會在轉場結束時到齊
 float gArrive(vec2 xz){
-  float d = length(xz - uGrowC.xz); d = uGrowR * (1. - exp(-d / uGrowR));
+  // 距離正規化到 0–1 再開根號：近處拉長、遠處壓縮，鏡頭前的建物有足夠時間慢慢長
+  float d = sqrt(1. - exp(-length(xz - uGrowC.xz) / uGrowR));
   float n = gNoise(xz * (6. / uGrowR)) * .65 + gNoise(xz * (21. / uGrowR)) * .35;
   return clamp((uGrowF - d - n * uGrowJit) / uGrowBand, 0., 1.);
 }
@@ -178,12 +179,12 @@ export function createEraGrow(THREE, defaults = {}) {
         const box = new THREE.Box3();
         for (const g of [to, from]) if (g) { const vis = g.visible; g.visible = true; box.expandByObject(g); g.visible = vis; }
         R = box.isEmpty() ? 300 : Math.max(...[[box.min.x, box.min.z], [box.max.x, box.min.z], [box.min.x, box.max.z], [box.max.x, box.max.z]].map(([x, z]) => Math.hypot(x - c.x, z - c.z)));
-        R = Math.max(80, Math.min(R * 0.55, 700));
+        R = Math.max(60, Math.min(R * 0.5, 600));
       }
-      const band = R * 0.42, jit = R * 0.28;
+      const band = 0.62, jit = 0.2;   // 以正規化距離（0–1）計
       for (const side of ['in', 'out']) {
         const u = U[side]; u.uGrowC.value.copy(c); u.uGrowR.value = R; u.uGrowBand.value = band; u.uGrowJit.value = jit;
-        u.uGround.value = opts.ground ?? defaults.ground ?? 0; u.uGrowFlat.value = opts.flat ?? defaults.flat ?? 0.35; u.uGrowF.value = -band;
+        u.uGround.value = opts.ground ?? defaults.ground ?? 0; u.uGrowFlat.value = opts.flat ?? defaults.flat ?? 0.35; u.uGrowF.value = 0;
       }
       prepare(to, 'in'); prepare(from, 'out');
       if (from) from.visible = true; if (to) to.visible = true;
@@ -194,7 +195,7 @@ export function createEraGrow(THREE, defaults = {}) {
       if (!run) return false;
       if (!api.hold) run.t = Math.min(run.dur, run.t + dt);
       const k = run.t / run.dur, e = k * k * (3 - 2 * k);
-      const F = -run.band + e * (run.R + run.jit + run.band * 2.2);
+      const F = e * (1 + run.jit + run.band);
       U.in.uGrowF.value = U.out.uGrowF.value = F;
       if (!run.mid && k >= 0.5) {
         run.mid = true;

@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "fetch-osm": "node scripts/fetch-osm.mjs",
     "bake-osm": "node scripts/bake-osm.mjs",
-    "test": "node tests/atlas-search.test.mjs && node tests/switcher-streetscape.test.mjs"
+    "test": "node tests/atlas-search.test.mjs && node tests/switcher-streetscape.test.mjs && node tests/era-grow.test.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
