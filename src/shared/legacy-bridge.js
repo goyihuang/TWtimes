@@ -59,6 +59,9 @@ const api = {
   weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '霧' },
   setHour: h => SA().setHour(h), setWeather: w => SA().setWeather(w),
   setEra(i) { const s = SA(); if (s.isTaipei) s.setGeneration(i + 1); else if (i) s.setNow(); else s.setPast(); },
+  // 時間軸拖曳：昔今兩個年代之間連續過渡（臺北五代站房沒有 scrub，時間軸改成越過中點就切換）
+  get scrub() { const s = SA(); return s && !s.isTaipei && s.scrubEra ? (a, b, k) => s.scrubEra(k) : undefined; },
+  get endScrub() { const s = SA(); return s && !s.isTaipei && s.endScrubEra ? t => s.endScrubEra(t === 1) : undefined; },
   setShot: i => SA().setShot(i), setFocal: mm => SA().setFocal(mm), toggleWalk: () => SA().toggleWalk(), zoom: f => SA().zoom(f),
   compare: () => SA().compare(), snapshot: () => SA().snapshot(), shareURL: () => SA().shareURL(),
 };

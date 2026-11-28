@@ -15,6 +15,7 @@
 //         extraLinks [{ label, href }]
 import './scene-panel.css';
 import { mountStudio } from './scene-tools.js';
+import { mountTimeline } from './timeline.js';
 import { stampCredits, showCredits, creditsOf } from './credits.js';
 
 const el = id => document.getElementById(id);
@@ -43,6 +44,8 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
   let bar = eraHost || document.querySelector('.time-switch');
   if (bar.querySelector('#old')) { const nb = bar.cloneNode(false); bar.after(nb); bar.hidden = true; bar = nb; }
   bar.id = 'eras'; bar.classList.add('sp-eras'); bar.replaceChildren();
+  // 年代列改成可拖曳的時間軸（src/shared/timeline.js）：年代之間連續過渡
+  const timeline = mountTimeline(bar);
 
   // 走路提示
   const stage = el('stage');
@@ -58,7 +61,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
     onEra(i) {
       if (!api) { ui._pendingEra = i; return; }
       const e = api.eras[i]; if (!e) return;
-      [...bar.children].forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
+      timeline.setEra(i);
       const set = (id, v) => { const n = el(id); if (n && v != null) n.textContent = v; };
       if (!api.keepCaption) { set('viewYear', e.year); set('viewName', e.name); set('viewEnglish', e.en || en); set('modelInfo', e.story); }
       set('story', e.story);
@@ -80,10 +83,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
     api = a;
     // 依能力隱藏控制項：不支援的功能不放假按鈕
     host.querySelectorAll('[data-need]').forEach(n => { const k = n.dataset.need; n.hidden = !(k === 'shots' ? a.shots?.length : a[k]); });
-    bar.replaceChildren(...a.eras.map((e, i) => {
-      const b = document.createElement('button'); b.setAttribute('aria-pressed', 'false');
-      b.innerHTML = `<b>${esc(e.year)}</b> <span>${esc(e.name)}</span>`; b.onclick = () => a.setEra(i); return b;
-    }));
+    timeline.bind(a);
     el('shot').replaceChildren(...(a.shots || []).map((s, i) => new Option(s.name, i)));
     el('shot').value = String(a.state.shot ?? 0);
     el('shot').onchange = () => a.setShot(+el('shot').value);
@@ -147,7 +147,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
   function toggleClean() { const c = document.body.classList.toggle('clean-view'); el('cleanView').setAttribute('aria-pressed', String(c)); }
   addEventListener('keydown', e => { if ((e.key === 'h' || e.key === 'H') && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) && !api?.state.walk) toggleClean(); });
 
-  return { ui, bind, sync, status, setStory(t) { el('story').textContent = t; } };
+  return { ui, bind, sync, status, timeline, setStory(t) { el('story').textContent = t; } };
 }
 
 // 「我的攝影」：首頁框架提供 saveTainanPhoto；沒有框架時直接下載
