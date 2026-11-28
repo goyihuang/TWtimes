@@ -1,0 +1,68 @@
+name: 背景下載 OSM 街區
+
+# 全臺 101 處＋候選地景的現代街景街區（public/data/osm/<id>.json），在背景下載、存進 Actions 快取，
+# 不擋網站部署。每次只補缺的與超過 30 天的；有補到新的就觸發「部署到 GitHub Pages」把它們放上網站。
+# 觸發：清單或下載程式改了、每天一次、或到 Actions 手動執行（可填這次最多跑幾分鐘）。
+on:
+  push:
+    branches: [main]
+    paths:
+      - public/data/places-101.json
+      - public/data/scene-registry.json
+      - scripts/bake-osm.mjs
+      - src/streetscape/osm.js
+      - .github/workflows/bake-osm.yml
+  schedule:
+    - cron: '23 19 * * *' # 每天臺灣時間凌晨 3:23
+  workflow_dispatch:
+    inputs:
+      bake_minutes:
+        description: '這次最多花幾分鐘下載（101 處第一次全部下載約需 60–80 分鐘）'
+        default: '80'
+
+permissions:
+  contents: read
+  actions: write # 觸發部署
+
+concurrency:
+  group: osm-bake
+  cancel-in-progress: false
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache/restore@v4
+        with:
+          path: public/data/osm
+          key: osm-bake-latest
+          restore-keys: osm-bake-
+      - run: mkdir -p public/data/osm && ls public/data/osm | wc -l > /tmp/before
+      - id: bake
+        run: |
+          MIN="${BAKE_MIN//[^0-9]/}"
+          touch /tmp/stamp
+          npm run bake-osm -- --budget=$(( ${MIN:-80} * 60 )) || true
+          NEW=$(find public/data/osm -name '*.json' -newer /tmp/stamp | wc -l)
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          echo "新下載 $NEW 處；共 $(ls public/data/osm | wc -l) 處，$(du -sh public/data/osm | cut -f1)"
+        env:
+          BAKE_MIN: ${{ github.event.inputs.bake_minutes || '80' }}
+        timeout-minutes: 110
+      # 快取的 key 不能覆寫，每次存一份新的；部署用 restore-keys 取最新那份
+      - if: steps.bake.outputs.new != '0'
+        uses: actions/cache/save@v4
+        with:
+          path: public/data/osm
+          key: osm-bake-${{ github.run_id }}
+      - if: steps.bake.outputs.new != '0'
+        run: gh workflow run deploy.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}

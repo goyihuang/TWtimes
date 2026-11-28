@@ -1,13 +1,11 @@
 name: 部署到 GitHub Pages
 
+# 網站先上線：這裡只「取用」已下載好的 OSM 街區（Actions 快取），不在部署時下載，幾分鐘內就能看到改動。
+# 街區下載在另一個工作流程 bake-osm.yml 背景進行，補到新的街區後會再觸發這裡重新部署。
 on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      bake_minutes:
-        description: '這次最多花幾分鐘預先下載 OSM 街區（101 處第一次全部下載約需 60–80 分鐘）'
-        default: '20'
 
 permissions:
   contents: read
@@ -28,28 +26,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # 全臺 101 處＋候選地景的現代街景先下載好 OSM 街區，網頁開啟較快。
-      # 已下載的存在 Actions 快取，每次只補缺的與超過 30 天的；跑不完留到下次部署。
-      # 失敗不擋部署（網頁會改用瀏覽器即時查詢）。
+      # 取用最新一份已下載的街區；沒有也沒關係，網頁會改用瀏覽器即時查詢
       - uses: actions/cache/restore@v4
         with:
           path: public/data/osm
-          key: osm-bake-${{ github.run_id }}
+          key: osm-bake-latest
           restore-keys: osm-bake-
-      - run: |
-          MIN="${BAKE_MIN//[^0-9]/}"
-          npm run bake-osm -- --budget=$(( ${MIN:-20} * 60 ))
-        env:
-          BAKE_MIN: ${{ github.event.inputs.bake_minutes || '20' }}
-        continue-on-error: true
-        timeout-minutes: 90
-      - uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: public/data/osm
-          key: osm-bake-${{ github.run_id }}
-      - run: du -sh public/data/osm && ls public/data/osm | wc -l
-        continue-on-error: true
+      - run: mkdir -p public/data/osm && echo "預先下載的街區：$(ls public/data/osm | wc -l) 處，$(du -sh public/data/osm | cut -f1)"
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
