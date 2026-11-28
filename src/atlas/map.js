@@ -21,7 +21,7 @@ export function createMap(el, { onSelect, onCounty, onView }) {
     if (map.getZoom() < 14) return;
     const { lat, lng } = e.latlng, href = `./?place=osm&lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`;
     L.popup({ className: 'osm-pop', closeButton: true, autoPan: false }).setLatLng(e.latlng)
-      .setContent(`<div class="osm-pop-in"><strong>${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E</strong><a href="${href}">在這裡生成現代 3D 街景 ↗</a><small>依 OpenStreetMap 自動生成</small></div>`).openOn(map);
+      .setContent(`<div class="osm-pop-in"><strong>${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E</strong><a href="${href}">在這裡生成現代 3D 街景 ↗</a><a href="./?place=tw&ll=${lat.toFixed(5)},${lng.toFixed(5)}">在全臺立體地景中飛到這裡 ↗</a><small>依 OpenStreetMap 自動生成</small></div>`).openOn(map);
   });
 
   // 底圖

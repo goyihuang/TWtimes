@@ -5,3 +5,4 @@ dist
 tools/blender/_tex/
 __pycache__/
 public/data/osm/
+tests/out/

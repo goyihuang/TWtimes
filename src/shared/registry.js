@@ -33,11 +33,16 @@ export function sceneHref(s) {
   return './map.html#sel=' + encodeURIComponent(s.id) + '&mode=atlas';
 }
 
+// 在全臺立體地景中飛到這個景點（有座標才有）
+export function worldHref(s) {
+  return Number.isFinite(s?.lat) && Number.isFinite(s?.lng) ? './?place=tw&id=' + encodeURIComponent(s.id) : './?place=tw';
+}
+
 // 依目前網址找出對應的景點
 export function currentScene(scenes, search) {
   const q = new URLSearchParams(search);
   const place = q.get('place');
-  if (place === 'osm') return scenes.find(s => s.id === q.get('id')) || null;
+  if (place === 'osm' || place === 'tw') return scenes.find(s => s.id === q.get('id')) || null;
   return scenes.find(s => placeKey(s) === place) || null;
 }
 

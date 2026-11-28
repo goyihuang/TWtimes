@@ -4,7 +4,7 @@
 //   臺灣小地圖、最近看過；已上線景點進 3D 今昔，其餘有座標的景點直接開 OSM 現代街景
 import './scene-switcher.css';
 import { indexScene, runQuery } from '../atlas/search.js';
-import { REGIONS, regionOf, modeOf, MODE_LABEL, sceneHref, currentScene, geoOrder, project, MINI } from './registry.js';
+import { REGIONS, regionOf, modeOf, MODE_LABEL, sceneHref, worldHref, currentScene, geoOrder, project, MINI } from './registry.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -55,6 +55,7 @@ export async function mountSceneSwitcher({ host = document.querySelector('.desti
     </div>
     <div class="ss-strip" role="list" aria-label="已上線的 3D 今昔景點">${live.map(s => `<a role="listitem" class="ss-chip ${s.id === cur?.id ? 'on' : ''}" href="${esc(sceneHref(s))}" ${s.id === cur?.id ? 'aria-current="page"' : ''}><img src="${esc(s.thumbnail)}" alt="" loading="lazy"><span>${esc(shortName(s))}</span></a>`).join('')}</div>
     <button class="ss-search" id="ssSearch" title="搜尋全部景點（Ctrl＋K）">⌕ <span>全部 ${scenes.length} 處</span></button>
+    <a class="ss-map ss-world" href="${esc(cur ? worldHref(cur) : './?place=tw')}" title="全臺地形、道路與建物連成一片，鏡頭移到哪裡就載到哪裡"${q.get('place') === 'tw' ? ' aria-current="page"' : ''}>全臺立體 <span>⛰</span></a>
     <a class="ss-map" href="./map.html${cur ? '#sel=' + encodeURIComponent(cur.id) : ''}">全臺地圖 <span>↗</span></a>`;
   host.before(bar); document.body.classList.add('ss-ready');
   bar.querySelector('.ss-chip.on')?.scrollIntoView({ block: 'nearest', inline: 'center' });

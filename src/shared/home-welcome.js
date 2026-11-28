@@ -15,7 +15,7 @@ export async function showWelcome() {
     <h2>走進臺灣的街，<br>在同一個鏡位切換今昔。</h2>
     <p>眼前是<b>臺南驛前</b>：拖曳轉動、下方切換年代。${live} 處 3D 今昔景點，加上 ${scenes.length - live} 處可直接看現代街景的候選地，都在上方的景點列與<b>景點目錄</b>（Ctrl＋K）。</p>
     ${featured.length ? `<div class="hw-picks">${featured.map(s => `<a href="${esc(sceneHref(s))}"><img src="${esc(s.thumbnail)}" alt="" loading="lazy"><span>${esc(s.name.replace(/[・·].*$/, ''))}</span></a>`).join('')}</div>` : ''}
-    <div class="hw-actions"><button class="hw-go" type="button">開始探索</button><button class="hw-dir" type="button">景點目錄</button><a href="./map.html">全臺地圖 ↗</a></div>`;
+    <div class="hw-actions"><button class="hw-go" type="button">開始探索</button><button class="hw-dir" type="button">景點目錄</button><a href="./?place=tw">全臺立體地景 ↗</a><a href="./map.html">全臺地圖 ↗</a></div>`;
   viewer.append(card);
   const close = () => { card.classList.add('out'); setTimeout(() => card.remove(), 260); };
   card.querySelector('.hw-go').onclick = close;
