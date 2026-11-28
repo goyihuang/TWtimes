@@ -8,6 +8,7 @@ import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
 import { cloudTex, rng, signTexture } from '../tainan/kit.js';
 import { loadStreet } from './osm.js';
 import { buildStreet } from './build.js';
+import { OSM_CREDIT, stampGLB } from '../shared/credits.js';
 
 const mmToFov = mm => 2 * Math.atan(12 / mm) * 180 / Math.PI;
 function sunDir(hour, lat, decl = 8) {
@@ -192,7 +193,7 @@ export async function createStreetscape(canvas, ui = {}, place) {
   async function exportGLB() {
     status('匯出 GLB 中…');
     const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
-    grow.finish(); const buf = await new GLTFExporter().parseAsync(street.root, { binary: true, onlyVisible: true });
+    grow.finish(); const buf = stampGLB(await new GLTFExporter().parseAsync(street.root, { binary: true, onlyVisible: true }), OSM_CREDIT);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' })); a.download = `${place.id || 'streetscape'}-osm-${state.radius}m.glb`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     status('已匯出 GLB（街廓幾何，立面窗格為即時著色，不含在模型內）。資料 © OpenStreetMap contributors，發表時須標示。');
@@ -212,7 +213,8 @@ export async function createStreetscape(canvas, ui = {}, place) {
   let rebuildTimer = 0; const later = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuild, 160); };
   const toggle = (id, label, title, key) => ({ id, label, title, on: () => state[key], set: v => { state[key] = v; later(); } });
   return {
-    renderer, scene, camera, controls, state, eras: [era], shots, data, THREE: T, grow, transitions: ['grow', 'cut'], exportRoot: () => street.root,
+    renderer, scene, camera, controls, post, state, eras: [era], shots, data, THREE: T, grow, transitions: ['grow', 'cut'], exportRoot: () => street.root, credits: [OSM_CREDIT],
+    focusLatLng() { const t = state.walk ? camera.position : controls.target, kx = 111320 * Math.cos(place.lat * Math.PI / 180); return { lat: place.lat - t.z / 110540, lng: place.lng + t.x / kx, name: place.name || '', hour: state.hour, size: state.radius }; },
     get stats() { return street.stats; },
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '霧' },

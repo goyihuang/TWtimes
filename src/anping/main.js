@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
 import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
+import { OSM_CREDIT } from '../shared/credits.js';
 import { cloudTex, rng } from '../tainan/kit.js';
 import { ERAS, SHOTS, mmToFov } from './eras.js';
 import { buildEra, inPoly } from './world.js';
@@ -177,7 +178,7 @@ export async function createAnping(canvas, ui = {}) {
   status(osm ? `城堡與市鎮：成大疊圖描線、以外堡南牆校正｜現況：${osmData.source}（${osmData.fetched}）` : 'OSM 街廓未載入，現代年代只顯示平臺');
 
   return {
-    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state, THREE: T, grow,
+    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state, THREE: T, grow, credits: ['街廓 ' + OSM_CREDIT],
     transitions: ['grow', 'fade', 'cut'], exportRoot: () => eras[state.era].group,
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜可走上城堡平臺｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '海霧' },

@@ -34,3 +34,21 @@ export async function resolveVector() {
     throw e;
   }
 }
+
+// 圖磚快取（tile-worker.js 寫入，保存 7 天）：每次開啟全臺地景時清掉過期與超過上限的項目。
+// Cache Storage 的 keys() 依寫入順序排列，超過上限時刪最早寫入的。
+export const TILE_CACHE = 'twtimes-tiles-v1', TILE_TTL = 7 * 864e5, TILE_CACHE_MAX = 3000;
+export async function pruneTileCache(max = TILE_CACHE_MAX) {
+  if (!globalThis.caches) return 0;
+  try {
+    const c = await caches.open(TILE_CACHE), keys = await c.keys(); let n = 0;
+    const over = Math.max(0, keys.length - max);
+    for (let i = 0; i < keys.length; i++) {
+      if (i < over) { await c.delete(keys[i]); n++; continue; }
+      if (i % 25) continue; // 抽查過期：寫入順序即時間順序，找到第一個未過期就停
+      const r = await c.match(keys[i]); if (r && Date.now() - +(r.headers.get('x-tw-t') || 0) < TILE_TTL) break;
+      for (let k = Math.max(over, i - 24); k <= i; k++) { await c.delete(keys[k]); n++; }
+    }
+    return n;
+  } catch { return 0; }
+}

@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
 import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
+import { OSM_CREDIT } from '../shared/credits.js';
 import { ERAS, SHOTS, mmToFov } from './eras.js';
 import { loadOSM } from './osm.js';
 import { buildEra, PLATFORMS } from './scenery.js';
@@ -278,7 +279,7 @@ export async function createTainan(canvas, ui = {}) {
   status(warn.length ? warn.join('；') : `站房：Blender 重建（依館藏舊照）｜街廓：${osm?.source || 'OSM'}（${osm?.fetched || ''}）`);
 
   return {
-    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state, THREE: T, grow,
+    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state, THREE: T, grow, credits: ['街廓 ' + OSM_CREDIT],
     transitions: ['grow', 'fade', 'cut'], exportRoot: () => eras[state.era].group,
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '晨霧' },

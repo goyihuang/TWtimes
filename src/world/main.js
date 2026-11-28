@@ -7,7 +7,9 @@ import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
 import { facadeMaterial } from '../streetscape/build.js';
 import { makeFrame, selectTiles, rootTiles, tileKey, tileSize, covers, parentOf, MAX_Z, TAIWAN } from './tiles.js';
-import { SOURCES, resolveVector } from './sources.js';
+import { SOURCES, resolveVector, pruneTileCache } from './sources.js';
+import { patchPop, popDepth, popStart } from './pop.js';
+import { OSM_CREDIT, OMT_CREDIT, stampGLB, creditLine } from '../shared/credits.js';
 
 const mmToFov = mm => 2 * Math.atan(12 / mm) * 180 / Math.PI;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -56,6 +58,7 @@ export async function createWorld(canvas, ui = {}, place) {
     era: 0, shot: 0, mm: qn('mm', 14, 135, 28), hour: qn('t', 0, 23.75, 15.5), weather: ['clear', 'cloudy', 'rain', 'fog'].includes(q.get('w')) ? q.get('w') : 'clear', walk: false, night: 0,
     seed: qn('seed', 1, 9999, 1) | 0, heightScale: qn('hs', 0.5, 2, 1), roadScale: qn('rs', 0.6, 1.6, 1), exaggeration: qn('ex', 1, 3, 1), detail: qn('det', 0.5, 2, lowEnd ? 0.75 : 1),
     clay: q.get('clay') === '1', trees: q.get('trees') !== '0', labels: q.get('labels') !== '0',
+    pop: q.has('pop') ? q.get('pop') !== '0' : !matchMedia('(prefers-reduced-motion: reduce)').matches,
   };
   const frame = makeFrame(start.lat, start.lng);
 
@@ -81,6 +84,19 @@ export async function createWorld(canvas, ui = {}, place) {
   const crownGeo = (() => { const g = new T.IcosahedronGeometry(2.6, 1), p = g.attributes.position; for (let i = 0; i < p.count; i++) { const k = 0.82 + 0.3 * Math.sin(p.getX(i) * 2.1 + p.getZ(i) * 1.7); p.setXYZ(i, p.getX(i) * k, p.getY(i) * k * 0.85, p.getZ(i) * k); } g.computeVertexNormals(); g.translate(0, 4.6, 0); return g; })();
   const trunkGeo = new T.CylinderGeometry(0.16, 0.24, 3, 6).translate(0, 1.5, 0), pierGeo = new T.BoxGeometry(1.8, 1, 1.8).translate(0, 0.5, 0);
   const terrainMats = new Set();
+  // 紙雕彈起：建物、樹的頂點著色器依開始時間縮放高度（pop.js）；陰影深度材質同步
+  const uPopNow = { value: 0 };
+  patchPop(T, fm, 'bld', uPopNow); patchPop(T, mats.crown, 'inst', uPopNow); patchPop(T, mats.trunk, 'inst', uPopNow);
+  const depthBld = popDepth(T, 'bld', uPopNow), depthInst = popDepth(T, 'inst', uPopNow);
+  // 依焦點距離排開始時間；off：直接完成
+  function popTimes(t, now, on = state.pop) {
+    const g = t.group; if (!g) return;
+    const tx = controls.target.x, tz = controls.target.z;
+    for (const o of g.children) {
+      if (o.name === 'buildings') { const a = o.geometry.attributes.pop, A = a.array; for (let i = 0; i < A.length; i += 4) A[i + 3] = on ? popStart(now, A[i + 1], A[i + 2], t.ox, t.oz, tx, tz) : -100; a.needsUpdate = true; }
+      else if (o.isInstancedMesh && o.geometry.attributes.aPop) { const a = o.geometry.attributes.aPop, A = a.array, m = o.instanceMatrix.array; for (let i = 0; i < A.length; i++) A[i] = on ? popStart(now + 0.25, m[i * 16 + 12], m[i * 16 + 14], t.ox, t.oz, tx, tz) : -100; a.needsUpdate = true; }
+    }
+  }
 
   // ── 圖磚管理 ──
   let vecURL = null;
@@ -120,8 +136,8 @@ export async function createWorld(canvas, ui = {}, place) {
     const ground = new T.Mesh(geo, tm); ground.receiveShadow = true; g.add(ground); // 地形不投影（雙面材質會把自己整片遮暗）；山的明暗由貼圖裡的地形陰影負責
     if (r.buildings && r.buildings.position.length) {
       const bg = new T.BufferGeometry();
-      for (const [k, n] of [['position', 3], ['normal', 3], ['fuv', 2], ['color', 3]]) bg.setAttribute(k, new T.BufferAttribute(r.buildings[k], n));
-      bg.computeBoundingSphere(); const bm = new T.Mesh(bg, fm); bm.castShadow = bm.receiveShadow = true; bm.name = 'buildings'; g.add(bm);
+      for (const [k, n] of [['position', 3], ['normal', 3], ['fuv', 2], ['color', 3], ['pop', 4]]) bg.setAttribute(k, new T.BufferAttribute(r.buildings[k], n));
+      bg.computeBoundingSphere(); const bm = new T.Mesh(bg, fm); bm.castShadow = bm.receiveShadow = true; bm.name = 'buildings'; bm.customDepthMaterial = depthBld; g.add(bm);
     }
     if (r.roads) for (const k of ['asphalt', 'minor', 'path', 'rail']) {
       const a = r.roads[k]; if (!a?.position.length) continue;
@@ -131,12 +147,14 @@ export async function createWorld(canvas, ui = {}, place) {
     const piers = r.roads?.piers?.data;
     if (piers?.length) { const n = piers.length / 4, im = new T.InstancedMesh(pierGeo, mats.pier, n), m4 = new T.Matrix4(); for (let i = 0; i < n; i++) im.setMatrixAt(i, m4.makeScale(1, piers[i * 4 + 3], 1).setPosition(piers[i * 4], piers[i * 4 + 1], piers[i * 4 + 2])); im.castShadow = true; im.computeBoundingSphere(); g.add(im); }
     if (r.trees?.length) {
-      const n = r.trees.length / 4, ci = new T.InstancedMesh(crownGeo, mats.crown, n), ti = new T.InstancedMesh(trunkGeo, mats.trunk, n), m4 = new T.Matrix4(), qq = new T.Quaternion(), col = new T.Color(), up = new T.Vector3(0, 1, 0);
+      const n = r.trees.length / 4, cg = crownGeo.clone(), tg = trunkGeo.clone(), ap = new T.InstancedBufferAttribute(new Float32Array(n), 1); cg.setAttribute('aPop', ap); tg.setAttribute('aPop', ap);
+      const ci = new T.InstancedMesh(cg, mats.crown, n), ti = new T.InstancedMesh(tg, mats.trunk, n), m4 = new T.Matrix4(), qq = new T.Quaternion(), col = new T.Color(), up = new T.Vector3(0, 1, 0);
       for (let i = 0; i < n; i++) { const s = r.trees[i * 4 + 3]; m4.compose(new T.Vector3(r.trees[i * 4], r.trees[i * 4 + 1] - 0.3, r.trees[i * 4 + 2]), qq.setFromAxisAngle(up, i * 2.4), new T.Vector3(s, s * (0.9 + (i % 7) * 0.05), s)); ci.setMatrixAt(i, m4); ti.setMatrixAt(i, m4); ci.setColorAt(i, col.setHSL(0.24 + (i % 11) * 0.007, 0.3 + (i % 5) * 0.04, 0.2 + (i % 9) * 0.014)); }
-      ci.castShadow = ti.castShadow = true; ci.receiveShadow = true; ci.computeBoundingSphere(); ti.computeBoundingSphere(); ci.name = 'trees'; ti.name = 'trees'; ci.visible = ti.visible = state.trees; g.add(ci, ti);
+      ci.castShadow = ti.castShadow = true; ci.receiveShadow = true; ci.customDepthMaterial = ti.customDepthMaterial = depthInst; ci.computeBoundingSphere(); ti.computeBoundingSphere(); ci.name = 'trees'; ti.name = 'trees'; ci.visible = ti.visible = state.trees; g.add(ci, ti);
     }
     Object.assign(t, { group: g, grid: r.grid, N: r.N, stats: r.stats, labels: r.labels, vecError: r.vecError });
     g.visible = false; world.add(g);
+    popTimes(t, time);
   }
   function disposeTile(t) {
     if (t.group) { world.remove(t.group); t.group.traverse(o => { if (o.isMesh || o.isInstancedMesh) { if (o.geometry !== crownGeo && o.geometry !== trunkGeo && o.geometry !== pierGeo) o.geometry.dispose(); if (o.material?.userData?.tex) { o.material.userData.tex.dispose(); terrainMats.delete(o.material); o.material.dispose(); } } }); }
@@ -330,11 +348,12 @@ export async function createWorld(canvas, ui = {}, place) {
     labelGroup.visible = state.labels && !document.body.classList.contains('clean-view');
     if (rain.visible) { const p = rainGeo.attributes.position.array; for (let i = 0; i < p.length; i += 6) { p[i + 1] -= dt * 26; p[i + 4] -= dt * 26; if (p[i + 1] < 0) { p[i + 1] += 60; p[i + 4] += 60; } } rainGeo.attributes.position.needsUpdate = true; rain.position.set(camera.position.x, camera.position.y - 30, camera.position.z); }
     if ((dirty && time - lastUpdate > 0.15) || time - lastUpdate > 1) { dirty = false; lastUpdate = time; updateTiles(); }
-    post.grade.uniforms.uTime.value = time;
+    post.grade.uniforms.uTime.value = time; uPopNow.value = time;
     post.composer.render(dt);
   }
 
   // ── 依據表、分享、匯出 ──
+  const credits = [OSM_CREDIT, OMT_CREDIT, '地形 Mapzen／AWS Terrain Tiles'];
   const era = { id: 'now', year: '現況', name: '全臺立體地景', en: 'TAIWAN IN 3D', story: '', evidence: [] };
   function nearStats() { let b = 0, g = 0; for (const t of shown) if (t.z >= MAX_Z && t.stats) { b += t.stats.buildings; g += t.stats.guessed; } return { b, g }; }
   statusIdle = () => { const { b, g } = nearStats(), [lng, lat] = frame.toLngLat(controls.target.x, controls.target.z); return `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E｜海拔 ${Math.round(heightAt(controls.target.x, controls.target.z) / state.exaggeration)} m｜近景 ${b.toLocaleString()} 棟建物（${g.toLocaleString()} 棟高度為推估）`; };
@@ -356,7 +375,7 @@ export async function createWorld(canvas, ui = {}, place) {
     u.searchParams.set('place', 'tw'); u.searchParams.set('ll', `${lat.toFixed(5)},${lng.toFixed(5)}`);
     u.searchParams.set('d', Math.round(dist)); u.searchParams.set('hd', Math.round(heading())); u.searchParams.set('pt', Math.round(pt));
     S('t', state.hour, 15.5); S('w', state.weather, 'clear'); S('mm', state.mm, 28); S('seed', state.seed, 1); S('hs', state.heightScale, 1); S('rs', state.roadScale, 1); S('ex', state.exaggeration, 1);
-    S('clay', state.clay ? '1' : '0', '0'); S('trees', state.trees ? '1' : '0', '1'); S('labels', state.labels ? '1' : '0', '1'); S('walk', state.walk ? '1' : '0', '0');
+    S('pop', state.pop ? '1' : '0', '1'); S('clay', state.clay ? '1' : '0', '0'); S('trees', state.trees ? '1' : '0', '1'); S('labels', state.labels ? '1' : '0', '1'); S('walk', state.walk ? '1' : '0', '0');
     u.searchParams.delete('shot'); u.searchParams.delete('cam');
     return u.href;
   }
@@ -365,7 +384,7 @@ export async function createWorld(canvas, ui = {}, place) {
     status('匯出 GLB 中…');
     const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
     const root = new T.Group(); for (const t of shown) if (t.z >= 13 && t.group) root.add(t.group.clone());
-    const buf = await new GLTFExporter().parseAsync(root, { binary: true, onlyVisible: true });
+    const buf = stampGLB(await new GLTFExporter().parseAsync(root, { binary: true, onlyVisible: true }), creditLine(credits));
     const [lng, lat] = frame.toLngLat(controls.target.x, controls.target.z);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' })); a.download = `taiwan-3d-${lat.toFixed(4)}_${lng.toFixed(4)}.glb`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
@@ -384,12 +403,15 @@ export async function createWorld(canvas, ui = {}, place) {
   controls.target.y = heightAt(controls.target.x, controls.target.z); lookFrom(controls.target.clone(), qn('d', 10, 900000, 950), qn('pt', 3, 89, 48), qn('hd', -360, 360, -20));
   if (q.get('walk') === '1') enterWalk();
   renderer.setAnimationLoop(frameLoop);
+  setTimeout(() => pruneTileCache().then(n => n && console.info(`圖磚快取：清掉 ${n} 筆過期或超量項目`)), 8000);
   updateEvidence(); setInterval(() => { if (!document.hidden) updateEvidence(); }, 4000);
 
   const later = (fn => { let t = 0; return f => { clearTimeout(t); t = setTimeout(f, 350); }; })();
   const toggle = (id, label, title, key, fn) => ({ id, label, title, on: () => state[key], set: v => { state[key] = v; fn(v); } });
+  function replayPop() { const now = time; for (const t of shown) if (t.z >= MAX_Z) popTimes(t, now + 0.1, true); }
   return {
-    renderer, scene, camera, controls, state, sun, eras: [era], shots, frame, tiles, heightAt, flyTo,
+    renderer, scene, camera, controls, post, state, sun, eras: [era], shots, frame, tiles, heightAt, flyTo, credits, replayPop,
+    focusLatLng() { const [lng, lat] = frame.toLngLat(controls.target.x, controls.target.z); return { lat, lng, name: place.name || '', hour: state.hour, size: clamp(camera.position.distanceTo(controls.target) * 0.6, 100, 1000) }; },
     get shown() { return shown; },
     stats: () => ({ ...nearStats(), tiles: shown.size, loading: [...tiles.values()].filter(t => t.state === 'loading' || t.state === 'queued').length, errors: [...tiles.values()].filter(t => t.state === 'error').map(t => t.key + ':' + t.err), vecErrors: [...shown].filter(t => t.vecError).length }),
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
@@ -408,9 +430,11 @@ export async function createWorld(canvas, ui = {}, place) {
       toggle('clay', '白模檢視', '建物與地面改成單一白色，方便看量體與光影', 'clay', v => { fm.userData.uniforms.uClay.value = v ? 1 : 0; for (const m of terrainMats) { m.map = v ? null : m.userData.tex; m.color.set(v ? 0xd9d6cf : 0xffffff); m.needsUpdate = true; } reloadAll(true); }),
       toggle('trees', '樹木', '林地、公園與校園的樹', 'trees', v => { for (const t of tiles.values()) t.group?.traverse(o => { if (o.name === 'trees') o.visible = v; }); if (v) reloadAll(true); }),
       toggle('labels', '地名', '城鎮、山峰與車站名稱', 'labels', () => { dirty = true; }),
+      toggle('pop', '紙雕彈起', '圖磚載入時建物與樹像立體書一樣從地面彈起', 'pop', v => { if (!v) for (const t of tiles.values()) popTimes(t, 0, false); }),
     ],
     actions: [
       { label: '重擲推估高度', title: '沒有 OSM 高度的建物換一組推估樓層', run: () => { state.seed = (state.seed % 9999) + 1; reloadAll(true); status(`種子 #${state.seed}：重擲近景建物的推估高度`); } },
+      { label: '重播彈起', title: '近景建物與樹從焦點往外依序彈起（拍片開場用）', run: () => { replayPop(); status('紙雕彈起：從焦點往外依序彈起'); } },
       { label: '匯出 GLB', title: '下載目前近景（地形、建物、道路）的 3D 模型，可帶進 Blender 搭景', run: exportGLB },
     ],
   };
