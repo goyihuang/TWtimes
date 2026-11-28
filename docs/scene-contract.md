@@ -39,6 +39,11 @@
   controls,                               // OrbitControls：提供「緩緩環繞」（或改給 setSpin(v)／spin）
   exportRoot: () => object3D,             // 目前年代的根節點：提供「匯出 GLB」
   redraw(),                               // 依需求重畫的引擎（app.js）用
+  // 畫面風格、短片、出處（src/shared/look.js、clip.js、credits.js；見 docs/look.md）
+  post,                                   // src/yuanshan/post.js 的 Post：提供「畫面風格」（線稿／網點、調色表、移軸、柔和陰影）與「短片」
+  credits: ['© OpenStreetMap contributors（ODbL）', …],   // 畫面右下、照片、短片、GLB 自動帶上
+  replayPop(),                            // 短片「彈起開場」（全臺地景）
+  focusLatLng() /* → { lat, lng, name, hour, size } */,   // 提供「在どこでもロケハン開啟此處」連結
   keepCaption: false,   // true：左下標題由引擎自己管（app.js）
   frameButtons: true,   // false：快門、縮放、重設、全螢幕保留引擎原本的處理（app.js）
 }

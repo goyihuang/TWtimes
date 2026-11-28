@@ -15,6 +15,7 @@
 //         extraLinks [{ label, href }]
 import './scene-panel.css';
 import { mountStudio } from './scene-tools.js';
+import { stampCredits, showCredits, creditsOf } from './credits.js';
 
 const el = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, k => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[k]));
@@ -103,9 +104,9 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
     const modes = document.querySelector('.view-modes');
     if (modes) modes.hidden = !a.toggleWalk;
     if (a.toggleWalk) { el('orbitBtn').onclick = () => { if (a.state.walk) a.toggleWalk(); }; el('walkBtn').onclick = () => { if (!a.state.walk) a.toggleWalk(); }; }
-    el('compare').onclick = () => { const { canvas, title: t } = a.compare(); window.saveScenePhoto(canvas, t); status('今昔並排已存入「我的攝影」'); };
+    el('compare').onclick = () => { const { canvas, title: t } = a.compare(); window.saveScenePhoto(stampCredits(canvas, creditsOf(a)), t); status('今昔並排已存入「我的攝影」'); };
     el('share').onclick = async () => {
-      const u = a.shareURL(); history.replaceState(null, '', u);
+      const u = studio?.decorateURL ? studio.decorateURL(a.shareURL()) : a.shareURL(); history.replaceState(null, '', u);
       try { await navigator.clipboard.writeText(u); status('已複製場景網址（含年代、鏡位與鏡頭位置）'); } catch { status(u); }
     };
     el('cleanView').onclick = toggleClean;
@@ -129,13 +130,14 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
       b.onclick = () => act.run(); el('spToggles').append(b); el('spToggles').hidden = false;
     }
     studio = mountStudio(el('spStudio'), a, { ui, status, title: title || el('viewName')?.textContent || '' });
+    showCredits(creditsOf(a));
     const links = el('spLinks'); links.hidden = !a.extraLinks?.length;
     links.innerHTML = (a.extraLinks || []).map(l => `<a href="${esc(l.href)}">${esc(l.label)}　↗</a>`).join('');
     // 共用框架按鈕（首頁原有場景保留自己的快門與縮放）
     const on = (id, fn) => { const n = el(id); if (n && a.frameButtons !== false) n.onclick = fn; };
     on('resetView', () => a.setShot(+el('shot').value));
     if (a.zoom) { on('plus', () => a.zoom(0.82)); on('minus', () => a.zoom(1.22)); }
-    on('shutter', () => { const c = window.cropToGuide(a.snapshot()); window.saveScenePhoto(c, (el('viewYear')?.textContent || '') + ' · ' + (el('viewName')?.textContent || title)); });
+    on('shutter', () => { const c = stampCredits(window.cropToGuide(a.snapshot()), creditsOf(a)); window.saveScenePhoto(c, (el('viewYear')?.textContent || '') + ' · ' + (el('viewName')?.textContent || title)); });
     on('full', () => document.fullscreenElement ? document.exitFullscreen() : el('viewer').requestFullscreen());
     ui.onEra(ui._pendingEra ?? a.state.era); ui.onShot(a.state.shot ?? 0); ui.onWalk(!!a.state.walk);
     const loading = el('loading'); if (loading) loading.hidden = true;
