@@ -6,6 +6,7 @@ import Pbf from 'pbf';
 import earcut from 'earcut';
 import { terrarium } from './tiles.js';
 import { buildingHeight, hash01, FLOOR } from './heights.js';
+import { TILE_CACHE, TILE_TTL } from './sources.js';
 
 const BAY = 3.4;
 const ROAD_W = { motorway: 24, trunk: 20, primary: 16, secondary: 13, tertiary: 10, minor: 7, service: 4.5, track: 3, path: 2, busway: 7, raceway: 8, pier: 4 };
@@ -30,9 +31,20 @@ function hypso(h, slope) {
 }
 
 // ── 下載 ──
-async function getBuf(url, signal) { const r = await fetch(url, { signal }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); }
+// 圖磚在瀏覽器 Cache Storage 保存 7 天（與現代街景的 Overpass 快取相同），再看同一處不必重新下載。
+// 上限由主執行緒 pruneTileCache() 控制（sources.js）。
+let cacheP = null;
+const tileCache = () => cacheP ??= (self.caches ? caches.open(TILE_CACHE).catch(() => null) : Promise.resolve(null));
+async function cachedFetch(url, signal) {
+  const c = await tileCache();
+  if (c) try { const hit = await c.match(url); if (hit && Date.now() - +(hit.headers.get('x-tw-t') || 0) < TILE_TTL) return hit; } catch { }
+  const r = await fetch(url, { signal }); if (!r.ok) return r;
+  if (c) try { const b = await r.clone().blob(); await c.put(url, new Response(b, { headers: { 'content-type': r.headers.get('content-type') || 'application/octet-stream', 'x-tw-t': String(Date.now()) } })); } catch { }
+  return r;
+}
+async function getBuf(url, signal) { const r = await cachedFetch(url, signal); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); }
 async function getDem(url, signal) {
-  const r = await fetch(url, { signal }); if (!r.ok) throw new Error(`地形 HTTP ${r.status}`);
+  const r = await cachedFetch(url, signal); if (!r.ok) throw new Error(`地形 HTTP ${r.status}`);
   const bmp = await createImageBitmap(await r.blob());
   const c = new OffscreenCanvas(bmp.width, bmp.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bmp, 0, 0);
   const px = g.getImageData(0, 0, bmp.width, bmp.height).data, n = bmp.width, out = new Float32Array(n * n);
@@ -197,7 +209,7 @@ function terrainMesh(grid, N, S) {
 }
 
 function buildings(L, S, H, opts) {
-  const pos = [], nor = [], fuv = [], col = [], stats = { buildings: 0, guessed: 0, tallest: 0 };
+  const pos = [], nor = [], fuv = [], col = [], pop = [], stats = { buildings: 0, guessed: 0, tallest: 0 };
   if (L) {
     const E = L.extent, sc = S / E, feats = [];
     let cover = 0;
@@ -219,7 +231,7 @@ function buildings(L, S, H, opts) {
       const gc = H(cx, cz), base = y0 > 0 ? gc + y0 : gmin - 0.4, top = gc + y0 + h;
       const rgb = opts.clay ? [0.73, 0.71, 0.68] : (/^#[0-9a-f]{6}$/i.test(p.colour || '') && !guessed ? hex(p.colour) : WALL_RGB[Math.floor(hash01(cx, cz, 3) * WALL_RGB.length)]);
       const uOff = Math.floor(r * 400) * 997;
-      const push = (X, Y, Z, nx, ny, nz, u, v) => { pos.push(X, Y, Z); nor.push(nx, ny, nz); fuv.push(u, v); col.push(rgb[0], rgb[1], rgb[2]); };
+      const push = (X, Y, Z, nx, ny, nz, u, v) => { pos.push(X, Y, Z); nor.push(nx, ny, nz); fuv.push(u, v); col.push(rgb[0], rgb[1], rgb[2]); pop.push(base, cx, cz, 0); }; // pop：紙雕彈起（底部高度、中心、開始時間由主執行緒填）
       for (const ring of rings) {
         // MVT 外環在 y 向下座標中為順時針；牆的外法線依環面積正負決定
         const hole = ring !== rings[0]; let run = 0;
@@ -250,7 +262,7 @@ function buildings(L, S, H, opts) {
       stats.buildings++; if (guessed) stats.guessed++; stats.tallest = Math.max(stats.tallest, top - gc);
     }
   }
-  return { arrays: { position: new Float32Array(pos), normal: new Float32Array(nor), fuv: new Float32Array(fuv), color: new Float32Array(col) }, stats };
+  return { arrays: { position: new Float32Array(pos), normal: new Float32Array(nor), fuv: new Float32Array(fuv), color: new Float32Array(col), pop: new Float32Array(pop) }, stats };
 }
 
 function ribbonInto(out, pts, w, yAt) {

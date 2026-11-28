@@ -352,3 +352,21 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 1. 合併後在使用者瀏覽器檢查臺北、臺中市區的建物量與幀率，必要時調 `tiles.js` 的 `FACTOR`。
 2. 選配：自架臺灣 PMTiles（Planetiler）、內政部 20 m DEM、國土測繪中心建物樓高。
 3. 把各景點的歷史層疊上來（建物「長出來」轉場可直接套用在這層的建物量體上）。
+## 22. 2026-11-28 畫面風格、紙雕彈起、短片輸出（Claude Code，分支 `claude/project-thread-flj8fd`）
+**需求**：評估 opengame、papercraft、Sprite Fusion、どこでもロケハン後，使用者同意一次做完：どこでもロケハン外連、移軸鏡頭、柔和陰影、年代調色表、線稿＋網點、紙雕彈起、9:16 短片，並自動標示 OSM／OpenMapTiles 出處、圖磚快取 7 天。完整說明見 `docs/look.md`。
+
+**本次修改**
+- `src/shared/look.js`（畫法、LUT、移軸、柔和陰影，插在 Post 組合器裡）、`clip.js`（短片）、`credits.js`（出處、GLB 出處、どこでもロケハン連結）；`scene-tools.js` 面板加「畫面風格」「短片」與外連；`scene-panel.js` 照片／並排蓋出處、分享網址帶風格參數、畫面右下出處列。
+- 全臺地景：`src/world/pop.js` 紙雕彈起（worker 輸出每頂點 `pop`），開關「紙雕彈起」、動作「重播彈起」；`tile-worker.js` 圖磚寫入 Cache Storage 7 天；`sources.js` 的 `pruneTileCache`；GLB 寫入 `asset.copyright`。
+- 現代街景、臺南、安平：API 加 `credits`（現代街景另加 `post`、`focusLatLng`）。
+- 測試：`tests/look-tools.test.mjs`（併入 `npm test`）、`tests/look-e2e.mjs`。
+
+**注意**
+- どこでもロケハン不能嵌入（CSP `frame-ancestors`），條款禁止把輸出當素材再配布；只放連結，不要抓它的資料。
+- 畫面風格與短片只在有 `api.post` 的場景出現（全臺地景、現代街景、臺南、安平）。
+- 線稿通道每幀多畫一次場景（法線＋深度），只在選了線稿時才啟用。
+
+**下一步**
+1. app.js 舊場景與圓山接上畫面風格與短片。
+2. 視需要做真正的接觸硬化陰影（PCSS）與紙紋材質（papercraft 的 paper material）。
+3. 短片加字幕卡（地名、年份）與配樂。
