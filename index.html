@@ -49,6 +49,6 @@ if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) location.replace(to
 import('./src/shared/scene-switcher.js').then(m=>m.mountSceneSwitcher()).catch(err=>console.warn(err));
 if(window.TW_HOME)import('./src/shared/home-welcome.js').then(m=>m.showWelcome()).catch(()=>{});
 const place=new URLSearchParams(location.search).get('place');
-const launch=()=>(place==='tainan'?import('./src/tainan/platform.js'):place==='yuanshan'?import('./src/yuanshan/platform.js'):place==='osm'?import('./src/streetscape/platform.js'):import('./src/shared/legacy-bridge.js')).catch(err=>{console.error(err);const l=document.getElementById('loading');l.hidden=false;l.textContent='街景載入失敗，請重新整理或開啟硬體加速。'});
+const launch=()=>(place==='tainan'?import('./src/tainan/platform.js'):place==='anping'?import('./src/anping/platform.js'):place==='yuanshan'?import('./src/yuanshan/platform.js'):place==='osm'?import('./src/streetscape/platform.js'):import('./src/shared/legacy-bridge.js')).catch(err=>{console.error(err);const l=document.getElementById('loading');l.hidden=false;l.textContent='街景載入失敗，請重新整理或開啟硬體加速。'});
 if(document.readyState==='complete')launch();else window.addEventListener('load',launch,{once:true});
 </script></body></html>

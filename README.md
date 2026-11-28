@@ -1,6 +1,6 @@
 # 今昔時空 TWtimes
 
-[進入今昔街影](https://goyihuang.github.io/TWtimes/)：首頁直接是 3D 街景（臺南驛前），上方景點列可切換全部景點，Ctrl＋K 開景點目錄；[全臺地圖](https://goyihuang.github.io/TWtimes/map.html)可在地圖、圖鑑與時間軸上找景點、疊中研院百年歷史地圖。也可用 `?place=` 直接開啟，例如[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)、[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)。
+[進入今昔街影](https://goyihuang.github.io/TWtimes/)：首頁直接是 3D 街景（臺南驛前），上方景點列可切換全部景點，Ctrl＋K 開景點目錄；[全臺地圖](https://goyihuang.github.io/TWtimes/map.html)可在地圖、圖鑑與時間軸上找景點、疊中研院百年歷史地圖。也可用 `?place=` 直接開啟，例如[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)、[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)、[安平・大員](https://goyihuang.github.io/TWtimes/?place=anping)。
 
 ## 首頁、景點切換與現代街景
 
@@ -66,7 +66,7 @@ src/shared/scene-switcher.js  景點列與景點目錄（registry.js 為共用�
 src/streetscape/              現代街景（OSM 自動生成）
 public/app.js 等              臺中、彰化、臺北、高雄的引擎（three.min.js）
 src/shared/                   共用場景面板、設計變數、框架接口（docs/scene-contract.md）
-src/tainan/、src/yuanshan/    臺南、圓山的獨立引擎（npm three）
+src/tainan/、src/anping/、src/yuanshan/    臺南、安平、圓山的獨立引擎（npm three）
 src/atlas/ + map.html         全臺地圖首頁
 public/data/                  OSM 資料、地景資料庫
 tools/blender/                地標建模腳本
@@ -81,6 +81,16 @@ tools/blender/                地標建模腳本
 ## 地標 3D 模型（Blender）
 
 重要地標用 Blender 依照片建模，匯出 GLB 放在 `public/models/`。模型以公尺建模、原點在 OSM 輪廓外接矩形中心、長邊沿 x、正面朝 Blender +y。共用函式在 `tools/blender/common.py`。
+## 安平・大員
+
+首頁 `?place=anping`（景點列或景點目錄可切換）。四個年代：1644 荷蘭熱蘭遮城與大員市鎮、1871 湯姆生拍下的殘牆、1935 日治史料館與燈塔、2026 今日安平古堡與老街。
+
+- 平面：城堡（上層主堡、下層主堡、外堡）與市鎮街廓 A–P 描自成大博物館今昔疊圖，以 OSM 現存外堡南牆校正（`src/anping/plan.js`，方法見重建依據表第 1 節）。
+- 現況：`public/data/anping.osm.json`（OSM，ODbL，2026-11-28 下載）。
+- 程式：`src/anping/main.js`（引擎）、`world.js`（四年代地景，全部程式生成，沒有外部模型）、`eras.js`（年代、鏡位、依據）、`plan.js`、`platform.js`（接首頁 UI）。
+- 功能：六鏡位、焦距、天氣（晴／雲／雨／海霧）、時刻、夜間照明、漫步（可走上城堡平臺）、今昔並排、分享網址還原鏡頭。
+- 重建依據與可信度：[docs/anping-evidence.md](docs/anping-evidence.md)；史料卡 `docs/sources/anping-zeelandia/cards.json`；截圖 `docs/anping/`。
+
 ## 臺南驛前
 
 首頁 `?place=tainan`（舊網址 `tainan.html` 會轉回首頁）。五個年代：1920 第一代木造站房、1936 第二代站房、1970 戰後、2019 地下化前、2026 地下站啟用。
