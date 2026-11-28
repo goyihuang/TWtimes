@@ -109,7 +109,7 @@ body[data-mode=map] .view-map,body[data-mode=atlas] .view-atlas,body[data-mode=t
 .pv-place{font-size:12.5px;color:var(--muted);margin:0 0 8px}.pv-place b{color:var(--rust)}
 .pv-eras{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
 .pv-eras span{font:12px Georgia,serif;padding:2px 7px;border-radius:2px;background:#ece7d6;color:#5b4b2c}
-.pv-eras span[data-period=qing]{background:#e4d3c2}.pv-eras span[data-period=japanese]{background:#ecdcb8}.pv-eras span[data-period=postwar]{background:#d9e0cf}.pv-eras span[data-period=modern]{background:#d2dde0}
+.pv-eras span[data-period=dutch]{background:#e8c9b8}.pv-eras span[data-period=qing]{background:#e4d3c2}.pv-eras span[data-period=japanese]{background:#ecdcb8}.pv-eras span[data-period=postwar]{background:#d9e0cf}.pv-eras span[data-period=modern]{background:#d2dde0}
 .pv-summary{font-size:13.5px;line-height:1.75;margin:8px 0;color:#34463e}
 .pv-tags{display:flex;flex-wrap:wrap;gap:4px}.pv-tags span{font-size:11px;color:var(--muted);border:1px solid var(--rule);padding:1px 6px;border-radius:2px}
 .pv-actions{display:flex;gap:8px;margin:12px 0 6px;flex-wrap:wrap}
@@ -136,7 +136,7 @@ body[data-mode=map] .view-map,body[data-mode=atlas] .view-atlas,body[data-mode=t
 .card-foot{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
 
 /* 時間軸 */
-.timeline{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:0;min-height:100%;padding:24px;align-items:start}
+.timeline{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:0;min-height:100%;padding:24px;align-items:start}
 .period{border-left:1px solid #c6c8b5;padding:0 14px 20px;min-height:calc(100% - 10px)}
 .period.dim{opacity:.45}.period.on{background:linear-gradient(#f1e5c9,#f5f2e900 340px)}
 .period-head{width:100%;text-align:left;display:grid;grid-template-columns:1fr auto;padding:8px 4px 12px;border-bottom:3px solid var(--ink);margin-bottom:12px}
@@ -174,7 +174,7 @@ body[data-mode=map] .view-map,body[data-mode=atlas] .view-atlas,body[data-mode=t
   .view-atlas,.view-time{bottom:150px}
   .atlas-grid{padding:12px;gap:12px;grid-template-columns:1fr 1fr}
   .card-media{height:110px}.card p{display:none}
-  .timeline{grid-template-columns:repeat(5,78vw);overflow-x:auto;padding:12px}
+  .timeline{grid-template-columns:repeat(6,78vw);overflow-x:auto;padding:12px}
   .map-tools{top:10px;right:10px}
   .layer-panel{width:240px}
 }

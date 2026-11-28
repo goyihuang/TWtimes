@@ -271,3 +271,23 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 - 刪除 1935 版引擎：`src/main.js` 等根目錄模組、`src/builders/`、`station1917/2016.glb` 與腳本、`taichung-station.osm.json`、`thumbs/taichung-1935.jpg`。
 - 未移植：街寬編輯、州廳／市役所／第二市場／臺中公園鏡位、夜間路燈光池。
 - 實測：舊網址轉址（含 t、w）、時刻天氣切換、分享重開還原、彰化霧天，無錯誤。截圖 `docs/unify/taichung-night-rain.jpg`、`taichung-dusk.jpg`、`changhua-fog.jpg`。
+
+## 18. 2026-11-28 安平・大員（Claude Code，分支 `claude/project-thread-2a32rl`）
+**需求**：使用者提到臺南四百年前荷蘭人在大員建熱蘭遮城與大員市鎮，今天是安平古堡與安平老街。本輪依 PR #8 的流程，先整理史料卡，再建 3D。首頁改版與參考網站研究由另一條處理。
+
+**本次修改**
+- 新場景 `?place=anping`：`src/anping/`（main、world、eras、plan、platform），共用面板與首頁框架。四年代 1644／1871／1935／2026，各六鏡位。
+- 平面對位：成大博物館疊圖（`G:\Ai Data\今昔\台南\熱蘭遮\018c38e5….jpg`）比例尺 0.532 m/px，以 OSM「熱蘭遮城殘跡」（外堡南牆）校正，不旋轉、平移東 3 m 北 8 m。
+- `public/data/anping.osm.json`：容器連不到 OSM，在使用者電腦的瀏覽器下載後壓成精簡格式（kind、name、本地公尺座標）。
+- 接線：`index.html` 啟動分支、`public/app.js` 取景地點與 `MODULE_PLACES`、`platform-frame.js` CATALOG、`scene-registry.json` 新 entry 與新年代分類 `dutch`（荷西・明鄭 1624–1682）、類型「城堡古蹟」、主題「荷蘭時代」；地圖時間軸改為 6 欄；測試補安平。
+- 文件：`docs/anping-evidence.md`、`docs/sources/anping-zeelandia/cards.json`（第一份史料卡）、`docs/anping/*.jpg`、README、scene-inventory。
+
+**注意**
+- 開闊天際線的 HDR 天空會讓白天光暈把整幅畫面泛白，安平只在夜間開 bloom。臺南沿用原設定（街道視角天空少，影響小）。
+- 疊圖與館藏照片授權未確認，沒有進 repo，也沒有在網站轉載。湯姆生照片原件是公眾領域，但使用者資料夾裡的掃描來源未確認。
+
+**下一步**
+1. 熱蘭遮城考古報告或荷蘭國家檔案館原件：校正城堡高度與下層主堡位置（目前 C）。
+2. 1871、1935 年代的街屋改用中研院歷史地圖的街廓（目前以今天老街外框示意）。
+3. 加上明鄭（1662 安平鎮城）年代與「城堡的四百年」導覽動線。
+4. OSM 安平建物不完整，可補老街實際店屋外框。

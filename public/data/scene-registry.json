@@ -4,14 +4,15 @@
   "note": "今昔街影地景資料庫。新增地景只要在 scenes 加一筆，地圖、圖鑑與時間軸會同步出現。座標未查證者填 null（只出現在圖鑑，不上地圖）。status：live 已上線、dev 開發中、planned 候選。entry 只填已存在的頁面。",
   "taxonomy": {
     "periods": [
+      { "id": "dutch", "label": "荷西・明鄭", "en": "DUTCH & KOXINGA", "from": 1624, "to": 1682 },
       { "id": "qing", "label": "清領", "en": "QING", "from": 1683, "to": 1894 },
       { "id": "japanese", "label": "日治", "en": "JAPANESE ERA", "from": 1895, "to": 1945 },
       { "id": "postwar", "label": "戰後", "en": "POSTWAR", "from": 1946, "to": 1999 },
       { "id": "modern", "label": "現代", "en": "PRESENT", "from": 2000, "to": 2026 },
       { "id": "future", "label": "未來規劃", "en": "FUTURE", "from": 2027, "to": 2100 }
     ],
-    "types": ["車站", "鐵道設施", "河川水岸", "市場", "神社", "旅館", "公共建築", "宗教建築"],
-    "themes": ["臺灣鐵道百年", "消失的神社", "百貨與商業", "城門城牆", "港口", "公共建築"],
+    "types": ["車站", "鐵道設施", "河川水岸", "市場", "神社", "旅館", "公共建築", "宗教建築", "城堡古蹟"],
+    "themes": ["臺灣鐵道百年", "消失的神社", "百貨與商業", "城門城牆", "港口", "公共建築", "荷蘭時代"],
     "buildingStatus": ["現存", "已拆除", "已改建", "遷移保存"],
     "status": { "live": "已上線", "dev": "開發中", "planned": "候選地景" }
   },
@@ -103,6 +104,17 @@
       "sources": [{ "label": "交通部鐵道局 2026-10-19 新聞稿", "url": "https://www.rb.gov.tw/zh-TW/main/main_188/news/main_347/20261019_105610/" }, { "label": "重建依據表", "url": "https://github.com/goyihuang/TWtimes/blob/main/docs/tainan-evidence.md" }],
       "license": "街道 © OpenStreetMap contributors（ODbL）；站房為本專案 Blender 模型",
       "entry": "./?place=tainan", "status": "live", "confidence": "B"
+    },
+    {
+      "id": "anping-zeelandia", "name": "大員・熱蘭遮城與安平古堡", "nameEn": "Fort Zeelandia · Anping", "aliases": ["安平古堡", "熱蘭遮城", "臺灣城", "大員", "大員市鎮", "安平老街", "延平街", "Zeelandia", "Tayouan"],
+      "city": "臺南市", "district": "安平區", "lat": 23.0015, "lng": 120.16085, "coordSource": "OSM 安平古堡平臺中心（public/data/anping.osm.json）",
+      "types": ["城堡古蹟"], "themes": ["荷蘭時代", "城門城牆", "港口"], "buildingStatus": "已改建", "tags": ["荷蘭東印度公司", "熱蘭遮城", "大員市鎮", "湯姆生", "安平燈塔"],
+      "eras": [{ "year": "1644", "period": "dutch" }, { "year": "1871", "period": "qing" }, { "year": "1935", "period": "japanese" }, { "year": "2026", "period": "modern" }],
+      "thumbnail": "thumbs/anping.jpg",
+      "summary": "1644 年荷蘭人的熱蘭遮城與大員市鎮、1871 年湯姆生拍下的殘牆、1935 年日治史料館與燈塔，到今天的安平古堡與老街。城堡平面依成大疊圖描線，以現存外堡南牆校正。",
+      "sources": [{ "label": "重建依據表", "url": "https://github.com/goyihuang/TWtimes/blob/main/docs/anping-evidence.md" }, { "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
+      "license": "街道 © OpenStreetMap contributors（ODbL）；城堡與市鎮為本專案程式模型",
+      "entry": "./?place=anping", "status": "live", "confidence": "B"
     },
     {
       "id": "kaohsiung-station", "name": "高雄驛", "nameEn": "Takao Station", "aliases": ["高雄車站", "高雄火車站", "帝冠式站房", "高雄願景館"],

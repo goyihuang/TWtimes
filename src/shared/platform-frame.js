@@ -12,6 +12,7 @@ export const CATALOG = [
   { key: 'taipei', city: 'taipei', name: '臺北車站與館前路口', en: 'TAIPEI MAIN STATION', thumb: 'scene-taipei.jpg' },
   { key: 'yuanshan', city: 'taipei', name: '圓山・劍潭', en: 'MARUYAMA · KENTAN', thumb: 'thumbs/yuanshan.jpg' },
   { key: 'tainan', city: 'tainan', name: '臺南車站與站前廣場', en: 'TAINAN STATION', thumb: 'thumbs/tainan-station.jpg' },
+  { key: 'anping', city: 'tainan', name: '安平古堡・熱蘭遮城', en: 'FORT ZEELANDIA', thumb: 'thumbs/anping.jpg' },
   { key: 'kaohsiung', city: 'kaohsiung', name: '高雄車站與站前廣場', en: 'KAOHSIUNG STATION', thumb: 'scene-kaohsiung.jpg' },
 ];
 const CITY_FIRST = { taichung: 'station', changhua: 'changhua', taipei: 'taipei', tainan: 'tainan', kaohsiung: 'kaohsiung' };
