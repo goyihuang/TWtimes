@@ -1,10 +1,10 @@
 // 預先下載現代街景的 OSM 街區（需要 Node 18+、可連 Overpass API）。
 // 用法：npm run bake-osm                       → 全臺 101 處清單＋所有「有座標、未上線」的今昔地景
 //       npm run bake-osm -- <id> …             → 指定地點（重新下載）
-//       npm run bake-osm -- --budget=900       → 最多跑 900 秒，跑不完的留到下次（部署時用）
+//       npm run bake-osm -- --budget=900       → 最多跑 900 秒，跑不完的留到下次
 //       npm run bake-osm -- --max-age=30       → 已有、且不到 30 天的檔案略過（預設 30；0 表示全部重抓）
-// 輸出 public/data/osm/<id>.json（已列入 .gitignore）。GitHub Actions 部署時把這個資料夾存進快取，
-// 每次部署只補缺的、過期的，101 處分幾次部署累積完成；失敗不擋部署，網頁會改用瀏覽器即時查詢。
+// 輸出 public/data/osm/<id>.json（已列入 .gitignore）。背景工作流程 bake-osm.yml 把這個資料夾存進 Actions 快取，
+// 每次只補缺的、過期的，補到新的就觸發部署；部署本身不等下載。沒下載到的地點網頁會改用瀏覽器即時查詢。
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { overpassQuery, toCompact, OVERPASS } from '../src/streetscape/osm.js';
 
