@@ -352,3 +352,19 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 1. 合併後在使用者瀏覽器檢查臺北、臺中市區的建物量與幀率，必要時調 `tiles.js` 的 `FACTOR`。
 2. 選配：自架臺灣 PMTiles（Planetiler）、內政部 20 m DEM、國土測繪中心建物樓高。
 3. 把各景點的歷史層疊上來（建物「長出來」轉場可直接套用在這層的建物量體上）。
+## 23. 2026-11-28 全臺 101 處現代街景清單（Claude Code，分支 `claude/project-thread-l8c2yh`）
+**需求**：使用者想要像どこでもロケハン左側的「臺灣 101」選單：依縣市分組，點一下就載入那裡的現代 3D 街景，另加隨機抽一處。完整說明見 `docs/places.md`。
+
+**本次修改**
+- 新資料 `public/data/places-101.json`（101 處、22 縣市，座標逐筆以 OSM Nominatim 核對；與今昔地景同地點者共用 id）。
+- `src/shared/places.js`（分組、搜尋、隨機、`findPlaceById`）；`scene-switcher.js/.css` 加「☰ 臺灣 101」左側抽屜與「🎲 隨機」；`streetscape/platform.js`、`world/platform.js` 改用 `findPlaceById`。
+- `scripts/bake-osm.mjs` 下載 101 處＋候選地景，支援 `--budget`、`--max-age`，略過 30 天內已下載的；`deploy.yml` 把 `public/data/osm` 存進 Actions 快取、每次部署最多補 20 分鐘，可手動執行並填 `bake_minutes`。
+- 測試 `tests/places.test.mjs`（併入 `npm test`）。
+
+**注意**
+- 雲端容器連不到 Overpass／Nominatim；座標核對是在使用者 Chrome 做的。101 處的實際街景要合併部署後才看得到。
+- 第一次全部下載約 60–80 分鐘，會分 3–4 次部署累積完成（或手動執行一次填 90 分鐘）。
+
+**下一步**
+1. 合併後在使用者瀏覽器抽查幾處（含山區、離島），看建物量與載入時間。
+2. 每處加預設鏡位；清單放上全臺地圖圖層。

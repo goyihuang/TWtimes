@@ -1,16 +1,14 @@
 // 現代街景（OSM 自動生成）接到首頁共用框架與共用場景面板。
-// 網址：?place=osm&id=<地景資料庫 id>，或 ?place=osm&lat=&lng=&name=（地圖上任意點）
+// 網址：?place=osm&id=<101 清單或地景資料庫 id>，或 ?place=osm&lat=&lng=&name=（地圖上任意點）
 import { mountScenePanel, showLoadError } from '../shared/scene-panel.js';
 import { setupModuleFrame } from '../shared/platform-frame.js';
+import { findPlaceById } from '../shared/places.js';
 const el = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const q = new URLSearchParams(location.search);
-let place = null;
-try {
-  const reg = await fetch(new URL('data/scene-registry.json', document.baseURI)).then(r => r.json());
-  place = reg.scenes.find(s => s.id === q.get('id')) || null;
-} catch { }
+// id 先找全臺 101 處清單，再找今昔地景資料庫（src/shared/places.js）
+let place = await findPlaceById(q.get('id'));
 const lat = Number(q.get('lat')), lng = Number(q.get('lng'));
 if (!place && Number.isFinite(lat) && Number.isFinite(lng) && lat > 21.5 && lat < 26.6 && lng > 118 && lng < 122.5) place = { id: null, name: (q.get('name') || '').slice(0, 24) || '自選地點', city: '', lat, lng };
 document.body.classList.add('osm-platform');
