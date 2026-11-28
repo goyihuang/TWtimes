@@ -271,3 +271,24 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 - 刪除 1935 版引擎：`src/main.js` 等根目錄模組、`src/builders/`、`station1917/2016.glb` 與腳本、`taichung-station.osm.json`、`thumbs/taichung-1935.jpg`。
 - 未移植：街寬編輯、州廳／市役所／第二市場／臺中公園鏡位、夜間路燈光池。
 - 實測：舊網址轉址（含 t、w）、時刻天氣切換、分享重開還原、彰化霧天，無錯誤。截圖 `docs/unify/taichung-night-rain.jpg`、`taichung-dusk.jpg`、`changhua-fog.jpg`。
+
+## 18. 2026-11-28 首頁即 3D、景點切換選單、現代街景（Claude Code，分支 `claude/project-thread-x3ajhy`）
+**起點**：main `e9964f9`（PR #9 已合併）。使用者要求：首頁打開就看到 3D 街景、全臺地圖仍是主功能、景點多所以要好擴充好切換的選單；研究 どこでもロケハン 與 街構 Streetform 兩個工具。安平場景由另一條工作處理，本輪未動。完整說明與研究見 `docs/streetscape.md`。
+
+**本次修改**
+- 首頁：根目錄 `./` 不再轉 `map.html`，改開 `?place=tainan`，加導覽卡 `src/shared/home-welcome.js`（精選景點取 `scene-registry.json` 的 `home.featured`）。地圖頁首加「3D 街景」。
+- 景點切換：`src/shared/scene-switcher.js`＋`registry.js`＋`.css`。景點列取代舊城市列（舊元素留在 DOM 但隱藏，`app.js` 仍會操作它們）；景點目錄（Ctrl／⌘＋K、`/`）搜尋、篩選、小地圖、最近看過。
+- 現代街景：`src/streetscape/`（osm／rules／build／main／platform），`?place=osm&id=` 或 `&lat=&lng=&name=`。`app.js` 的 `MODULE_PLACES` 加 `osm`；`platform-frame.js` 容許目錄外的 key。共用面板新增選配 `params`、`actions`（`docs/scene-contract.md`）。
+- 地圖：候選地景預覽卡「看現代街景 3D」；z14 以上點地圖任一處可生成。
+- 資料：registry 加 `home`。`scripts/bake-osm.mjs`、`npm run bake-osm`；部署流程在 build 前執行（`continue-on-error`），輸出 `public/data/osm/`（.gitignore）。
+- 測試：`tests/switcher-streetscape.test.mjs`（區域、入口、place key、首頁一致性、投影、Overpass 轉換、烘焙往返、高度與路寬推估），`npm test` 兩支都跑。
+
+**實測**
+- 雲端容器 Chromium（SwiftShader）跑 vite preview：首頁導覽卡、景點列、景點目錄（篩選、搜尋、小地圖）、手機 390×844、臺中／臺北／高雄／圓山（只驗功能，圓山截圖在 SwiftShader 逾時，與本次無關）、地圖預覽卡與點地圖彈窗、現代街景（白天、黃昏、雨夜、白模、各鏡位），無 JS 錯誤。現代街景用臺南站區 OSM 資料模擬 Overpass 回應。
+- 使用者電腦的 Claude 內建瀏覽器：Overpass 可從瀏覽器直接查（CORS 正常），基隆、花蓮、臺南州廳成功，打狗、臺東當下逾時；單次約 40 秒，所以正式站靠部署時預先下載。
+
+**下一步**
+1. 合併後確認 Actions 的 bake-osm 步驟有成功下載，正式站開啟候選景點的速度。
+2. 美術：真實 PBR 貼圖組、天空可見度 AO、依 OSM 店名的直式招牌、單棟覆寫（`docs/streetscape.md` 第 4 節）。
+3. 安平等新景點上線時，只要在 registry 加一筆（有 `entry` 走歷史場景，否則自動是現代街景）。
+4. 首頁場景目前寫死臺南（`index.html` 與 `registry.home.scene` 由測試保證一致）；要輪播或改精選，改這兩處。

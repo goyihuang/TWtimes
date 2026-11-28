@@ -2,6 +2,7 @@
 import './atlas.css';
 import { indexScene, runQuery, FILTER_GROUPS } from './search.js';
 import { BASEMAPS, HISTORY_LAYERS } from './layers.js';
+import { sceneHref } from '../shared/registry.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -82,6 +83,8 @@ const thumb = s => s.thumbnail ? `<img src="${esc(s.thumbnail)}" alt="" loading=
 const eraLine = s => (s.eras || []).map(e => esc(e.year)).join(' · ');
 function enterButton(s, cls = '') {
   if (s.status === 'live' && s.entry) return `<a class="enter ${cls}" href="${esc(s.entry)}">進入 3D 街景 <span>↗</span></a>`;
+  // 未上線但有座標：先用 OSM 自動生成的現代街景
+  if (Number.isFinite(s.lat)) return `<a class="enter modern ${cls}" href="${esc(sceneHref(s))}" title="依 OpenStreetMap 自動生成，歷史年代尚未建模">看現代街景 3D <span>↗</span></a>`;
   return `<span class="enter disabled ${cls}">${STATUS_LABEL[s.status] || '籌備中'}・尚未開放</span>`;
 }
 function renderList() {

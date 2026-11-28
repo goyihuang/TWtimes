@@ -1,7 +1,8 @@
 {
   "version": 1,
   "updated": "2026-11-28",
-  "note": "今昔街影地景資料庫。新增地景只要在 scenes 加一筆，地圖、圖鑑與時間軸會同步出現。座標未查證者填 null（只出現在圖鑑，不上地圖）。status：live 已上線、dev 開發中、planned 候選。entry 只填已存在的頁面。",
+  "note": "今昔街影地景資料庫。新增地景只要在 scenes 加一筆，地圖、圖鑑與時間軸會同步出現。座標未查證者填 null（只出現在圖鑑，不上地圖）。status：live 已上線、dev 開發中、planned 候選。entry 只填已存在的頁面。 home：網站根目錄開啟的 3D 景點與首頁導覽卡的精選景點。有座標但未上線的地景，在景點目錄與地圖上提供「現代街景」（依 OSM 自動生成，./?place=osm&id=）。",
+  "home": { "scene": "tainan-station", "featured": ["tainan-station", "yuanshan", "taipei-station", "taichung-station", "kaohsiung-station"] },
   "taxonomy": {
     "periods": [
       { "id": "qing", "label": "清領", "en": "QING", "from": 1683, "to": 1894 },

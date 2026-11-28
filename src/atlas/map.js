@@ -16,6 +16,13 @@ export function createMap(el, { onSelect, onCounty, onView }) {
   map.createPane('history').style.zIndex = 250;
   map.createPane('counties').style.zIndex = 300;
   map.fitBounds(TAIWAN, { padding: [10, 10] });
+  // 任意地點：放大到街區層級後點地圖，可直接生成現代 3D 街景（OSM）
+  map.on('click', e => {
+    if (map.getZoom() < 14) return;
+    const { lat, lng } = e.latlng, href = `./?place=osm&lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`;
+    L.popup({ className: 'osm-pop', closeButton: true, autoPan: false }).setLatLng(e.latlng)
+      .setContent(`<div class="osm-pop-in"><strong>${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E</strong><a href="${href}">在這裡生成現代 3D 街景 ↗</a><small>依 OpenStreetMap 自動生成</small></div>`).openOn(map);
+  });
 
   // 底圖
   let base = null, baseId = null, tileErrors = 0;

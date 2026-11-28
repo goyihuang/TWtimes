@@ -4,3 +4,4 @@ dist
 *.log
 tools/blender/_tex/
 __pycache__/
+public/data/osm/
