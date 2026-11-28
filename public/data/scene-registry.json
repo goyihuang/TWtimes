@@ -28,17 +28,6 @@
       "entry": "./?place=station", "status": "live", "confidence": "B"
     },
     {
-      "id": "taichung-1935", "name": "臺中驛前 1935・天氣與日夜", "nameEn": "Taichū 1935 · Weather & Night", "aliases": ["臺中 1935", "中山路", "鈴蘭通", "新盛橋通"],
-      "city": "臺中市", "district": "中區", "lat": 24.13736, "lng": 120.68673, "coordSource": "OSM（src/viewpoints.js 景點）",
-      "types": ["車站", "河川水岸"], "themes": ["臺灣鐵道百年", "百貨與商業"], "buildingStatus": "現存", "tags": ["日治建築", "天氣", "日夜", "編輯街景", "宮原眼科", "臺中州廳"],
-      "eras": [{ "year": "1935", "period": "japanese" }, { "year": "今", "period": "modern" }],
-      "thumbnail": "thumbs/taichung-1935.jpg",
-      "summary": "臺中車站周邊街區的第一版原型：時光泡泡轉場、0–24 時太陽軌跡、晴雨霧天氣，可改街寬與樓層，存成拍攝場景。",
-      "sources": [{ "label": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright" }],
-      "license": "街道 © OpenStreetMap contributors（ODbL）",
-      "entry": "taichung-1935.html", "status": "live", "confidence": "C"
-    },
-    {
       "id": "taichung-greenriver", "name": "綠川・新盛橋", "nameEn": "Green River · Shinsei Bridge", "aliases": ["綠川", "中山綠橋", "新盛橋", "宮原眼科"],
       "city": "臺中市", "district": "中區", "lat": 24.137851, "lng": 120.68357, "coordSource": "OSM（public/geodata.js，宮原眼科）",
       "types": ["河川水岸"], "themes": ["百貨與商業"], "buildingStatus": "已改建", "tags": ["日治建築", "橋梁", "水岸"],

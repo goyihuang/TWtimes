@@ -209,12 +209,13 @@ function sky(){const cv=document.createElement('canvas');cv.width=2048;cv.height
  const tx=new THREE.TextureLoader().load('textures/taichu-sky.jpg',()=>{dirty=true});
  tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=THREE.RepeatWrapping;tx.repeat.y=.525;tx.offset.set(-.27,.475);const dome=new THREE.SphereGeometry(1450,96,48),uv=dome.attributes.uv;for(let i=0;i<uv.count;i++)uv.setY(i,Math.max(0,(uv.getY(i)-.475)/.525));const s=new THREE.Mesh(dome,new THREE.MeshBasicMaterial({map:tx,side:THREE.BackSide,fog:false}));s.name="skyBackdrop";s.userData.skies={taichung:tx,changhua:chSky};s.position.y=0;scene.add(s);scene.background=new THREE.Color('#becfca')}
 function resize(){if(!renderer)return;let w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();dirty=true}
-function render(refreshMap=true){if(!renderer||!ready)return;const lensFov=lensMM?2*Math.atan(12/lensMM)*180/Math.PI:0;if(walking){camera.position.set(eye.x,1.75,eye.z);camera.lookAt(eye.x+Math.sin(heading)*Math.cos(pitch),1.75+Math.sin(pitch),eye.z+Math.cos(heading)*Math.cos(pitch))}else{const plaza=(index===0&&plazaLens||cityOf(index)!=='taichung')&&!window.atlasWorkshop?.active();camera.fov=plaza?THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(22))*Math.max(1,1.85/camera.aspect))):44;const fit=plaza?distance:distance*Math.max(1,1.32/camera.aspect);camera.position.set(focus.x+fit*Math.cos(elevation)*Math.sin(theta),focus.y+fit*Math.sin(elevation),focus.z+fit*Math.cos(elevation)*Math.cos(theta));camera.lookAt(focus.x,focus.y,focus.z)}if(lensFov)camera.fov=lensFov;camera.updateProjectionMatrix();let fx=walking?eye.x:focus.x,fz=walking?eye.z:focus.z;const light=window.atlasWorkshop?.light()||[-95,160,-70];sun.position.set(fx+light[0],light[1],fz+light[2]);sun.target.position.set(fx,0,fz);renderer.render(scene,camera);if(refreshMap)paintMap();dirty=false}
+function render(refreshMap=true){if(!renderer||!ready)return;const lensFov=lensMM?2*Math.atan(12/lensMM)*180/Math.PI:0;if(walking){camera.position.set(eye.x,1.75,eye.z);camera.lookAt(eye.x+Math.sin(heading)*Math.cos(pitch),1.75+Math.sin(pitch),eye.z+Math.cos(heading)*Math.cos(pitch))}else{const plaza=(index===0&&plazaLens||cityOf(index)!=='taichung')&&!window.atlasWorkshop?.active();camera.fov=plaza?THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(22))*Math.max(1,1.85/camera.aspect))):44;const fit=plaza?distance:distance*Math.max(1,1.32/camera.aspect);camera.position.set(focus.x+fit*Math.cos(elevation)*Math.sin(theta),focus.y+fit*Math.sin(elevation),focus.z+fit*Math.cos(elevation)*Math.cos(theta));camera.lookAt(focus.x,focus.y,focus.z)}if(lensFov)camera.fov=lensFov;camera.updateProjectionMatrix();let fx=walking?eye.x:focus.x,fz=walking?eye.z:focus.z;const light=climate.on?climate.offset:(window.atlasWorkshop?.light()||[-95,160,-70]);if(climate.rain)climate.rain.position.set(fx,0,fz);sun.position.set(fx+light[0],light[1],fz+light[2]);sun.target.position.set(fx,0,fz);renderer.render(scene,camera);if(refreshMap)paintMap();dirty=false}
 let lastT=0,lastDraw=-Infinity;
 function frame(t){
   const dt=Math.min(.08,(t-lastT)/1000);lastT=t;
   if(!document.hidden&&stageVisible&&!drawer.open){
     if(walking)held.forEach(dir=>move(dir,dt*8));
+    if(climate.on&&climate.weather==='rain'){climate.fall(dt);dirty=true}
     if(crowdMoving)crowdTime+=dt;
     if(dirty||(crowdMoving&&t-lastDraw>=50)){
       worlds[Number(modern)].userData.people.update(crowdTime);
@@ -266,6 +267,7 @@ function eraCapture(m){
 }
 function restoreShared(q){
  const n=Number(q.get('shot'));if(q.get('view')!=='arcade'&&q.has('shot')&&Number.isInteger(n)&&n>0&&n<shotsFor().length)applyShot(n);
+ if(q.has('t')||q.has('w'))setClimate(q.has('t')?+q.get('t'):climate.hour,q.get('w')||climate.weather);
  const mm=Number(q.get('mm'));if(mm>=14&&mm<=135)lensMM=mm;
  const cam=(q.get('cam')||'').split(',').map(Number);
  if(cam.length===6&&cam.every(Number.isFinite)){
@@ -292,6 +294,8 @@ window.streetAtlas={
  setGeneration(n){changeTaipei(n)},
  toggleWalk(){setMode(!walking);return walking},
  setFocal(mm){lensMM=mm;dirty=true},
+ get hour(){return climate.hour},get weather(){return climate.weather},
+ setHour(h){setClimate(h,climate.weather)},setWeather(w){setClimate(climate.hour,w)},
  zoom(f){zoom(f<1?-1:1)},
  compare(){
   const a=eraCapture(false),b=eraCapture(true),out=document.createElement('canvas');out.width=a.width*2+12;out.height=a.height;
@@ -305,9 +309,41 @@ window.streetAtlas={
   if(index===0&&arcadeLens)u.searchParams.set('view','arcade');else u.searchParams.delete('view');
   if(shotNo&&!arcadeLens)u.searchParams.set('shot',shotNo);else u.searchParams.delete('shot');
   if(lensMM)u.searchParams.set('mm',lensMM);else u.searchParams.delete('mm');
+  if(climate.on){u.searchParams.set('t',climate.hour.toFixed(2));u.searchParams.set('w',climate.weather)}else{u.searchParams.delete('t');u.searchParams.delete('w')}
   const p=camera.position,t=walking?{x:eye.x+Math.sin(heading)*5,y:1.75+Math.sin(pitch)*5,z:eye.z+Math.cos(heading)*5}:focus;
   u.searchParams.set('cam',[p.x,p.y,p.z,t.x,t.y,t.z].map(v=>v.toFixed(1)).join(','));
   if(walking)u.searchParams.set('walk','1');else u.searchParams.delete('walk');
   return u.href;
  }
 };
+
+// ── 時刻與天氣（由臺中 1935 版移植）：使用者調整或網址帶 t、w 後才啟用，預設畫面不變 ──
+const climate={on:false,hour:14.5,weather:'clear',offset:[-95,160,-70],rain:null,fall:()=>{}};
+const WEATHER={clear:{sun:1,sky:1,fog:.0019},cloudy:{sun:.42,sky:.82,fog:.0026},rain:{sun:.2,sky:.6,fog:.0045},fog:{sun:.32,sky:.86,fog:.009}};
+function makeRain(){
+ const n=2400,pos=new Float32Array(n*6),seed=new Float32Array(n*3);
+ for(let i=0;i<n;i++){seed[i*3]=(Math.random()-.5)*160;seed[i*3+1]=Math.random()*70;seed[i*3+2]=(Math.random()-.5)*160}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+ const lines=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:'#c9d3d8',transparent:true,opacity:.42,fog:false}));
+ lines.frustumCulled=false;lines.visible=false;scene.add(lines);
+ const place=()=>{for(let i=0;i<n;i++){const x=seed[i*3],y=seed[i*3+1],z=seed[i*3+2];pos.set([x,y,z,x+.18,y+1.3,z+.06],i*6)}g.attributes.position.needsUpdate=true};
+ climate.fall=dt=>{for(let i=0;i<n;i++){seed[i*3+1]-=dt*22;if(seed[i*3+1]<0)seed[i*3+1]+=70}place()};place();
+ return lines;
+}
+function setClimate(hour,weather){
+ if(!ready)return;
+ climate.on=true;climate.hour=((hour%24)+24)%24;climate.weather=WEATHER[weather]?weather:'clear';
+ const w=WEATHER[climate.weather],h=climate.hour,arc=Math.PI*(h-6)/12,elev=Math.sin(arc);
+ const day=THREE.MathUtils.clamp(elev*1.6+.12,0,1),low=1-THREE.MathUtils.clamp(elev*2.2,0,1);
+ climate.offset=[-Math.cos(arc)*190,Math.max(18,elev*190),-70];
+ sun.intensity=2.05*day*w.sun;sun.color.set('#fff1de').lerp(new THREE.Color('#ffb070'),low*day);
+ const hemi=scene.children.find(o=>o.isHemisphereLight);
+ hemi.intensity=1.75*(.16+.84*day)*(.75+.25*w.sky);hemi.color.set('#e7f2fc').lerp(new THREE.Color('#2b3550'),1-day);hemi.groundColor.set('#a39e8f').lerp(new THREE.Color('#1d2128'),1-day);
+ const dome=scene.getObjectByName('skyBackdrop');
+ dome.material.color.set('#ffffff').multiplyScalar(.18+.82*day*w.sky).lerp(new THREE.Color('#f2b48a'),low*day*.35*w.sun);
+ const fogDay=new THREE.Color(climate.weather==='rain'?'#9aa4a9':'#d5dfe2');
+ scene.fog.color.copy(fogDay).lerp(new THREE.Color('#1b2230'),1-day);scene.fog.density=w.fog;
+ scene.background.copy(scene.fog.color);
+ if(!climate.rain)climate.rain=makeRain();climate.rain.visible=climate.weather==='rain';
+ dirty=true;window.dispatchEvent(new Event('atlas-change'));
+}

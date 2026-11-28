@@ -45,10 +45,10 @@ panel.bind(api);
 
 | 場景 | 新參數 | 仍支援的舊網址 |
 |---|---|---|
-| 臺中、彰化、高雄 | `?place=<key>&era=past|now&shot=n&mm=&cam=px,py,pz,tx,ty,tz&walk=1` | `?place=<key>`、`?place=station&view=arcade&era=past|now` |
+| 臺中、彰化、高雄 | `?place=<key>&era=past|now&shot=n&mm=&t=&w=&cam=px,py,pz,tx,ty,tz&walk=1` | `?place=<key>`、`?place=station&view=arcade&era=past|now` |
 | 臺北 | `?place=taipei&generation=1–5&shot=…&cam=…` | `?place=taipei&generation=n` |
 | 臺南 | `?place=tainan&era=1920…2026&t=&w=&mm=&cam=&walk=1` | `tainan.html?era=0&shot=4`（轉址） |
 | 圓山 | `?place=yuanshan&era=1–4&t=&w=&mm=&cam=` | `yuanshan.html?era=…&shot=…&paint=1`（轉址）、`?place=yuanshan` |
-| 臺中 1935 | 不變 | `#era=1935&t=&w=&v=` 轉到 `taichung-1935.html`（待使用者決定是否退場） |
+| 臺中 1935（已退場） | — | `taichung-1935.html#era=1935&t=&w=&v=`、`./#era=…` 轉到 `?place=station`（或 `river`）並帶 `era`、`t`、`w` |
 
 `shot` 從 0 起算（圓山沿用舊的 1 起算）。`cam` 存在時優先於 `shot`。
