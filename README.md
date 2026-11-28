@@ -1,6 +1,13 @@
 # 今昔時空 TWtimes
 
-[進入全臺地景地圖](https://goyihuang.github.io/TWtimes/)：在臺灣地圖、圖鑑與時間軸上找到每一處地景，疊上中研院百年歷史地圖，再進入 3D 街景切換今昔。舊的街景首頁仍可用 `?place=` 直接開啟，例如[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)、[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)、[臺南驛前](https://goyihuang.github.io/TWtimes/?place=tainan)、[安平・大員](https://goyihuang.github.io/TWtimes/?place=anping)。
+[進入今昔街影](https://goyihuang.github.io/TWtimes/)：首頁直接是 3D 街景（臺南驛前），上方景點列可切換全部景點，Ctrl＋K 開景點目錄；[全臺地圖](https://goyihuang.github.io/TWtimes/map.html)可在地圖、圖鑑與時間軸上找景點、疊中研院百年歷史地圖。也可用 `?place=` 直接開啟，例如[臺北車站](https://goyihuang.github.io/TWtimes/?place=taipei)、[高雄車站](https://goyihuang.github.io/TWtimes/?place=kaohsiung)、[安平・大員](https://goyihuang.github.io/TWtimes/?place=anping)。
+
+## 首頁、景點切換與現代街景
+
+- 根目錄直接開 3D 街景，導覽卡介紹景點列、景點目錄與全臺地圖。
+- 景點列與景點目錄全部由 `scene-registry.json` 產生：搜尋、地區／呈現方式／年代／類型篩選、臺灣小地圖、最近看過。
+- 有座標但還沒建模的景點，依 OpenStreetMap 自動生成現代 3D 街景（`?place=osm&id=…`），可調推估樓高、路寬、範圍、白模檢視並匯出 GLB；地圖上放大後點任一處也能生成。
+- 部署時 `npm run bake-osm` 預先下載候選景點的街區。細節與兩個參考工具的研究見 [docs/streetscape.md](docs/streetscape.md)。
 
 ## 全臺地圖首頁（map.html）
 
@@ -46,6 +53,7 @@ npm run dev        # 本機預覽 http://localhost:5173
 npm run build      # 輸出到 dist/
 npm test           # 地景資料庫與搜尋測試
 npm run fetch-osm -- 西,南,東,北 public/data/<街區>.osm.json   # 下載 OSM 資料
+npm run bake-osm   # 預先下載候選景點的現代街景街區（public/data/osm/，不提交）
 ```
 
 推到 `main` 後，`.github/workflows/deploy.yml` 會自動建置並部署到 GitHub Pages（需在 repo 的 Settings → Pages 把 Source 設為 GitHub Actions）。
@@ -53,7 +61,9 @@ npm run fetch-osm -- 西,南,東,北 public/data/<街區>.osm.json   # 下載 OS
 ## 架構
 
 ```
-index.html + style.css        首頁框架（城市列、主畫面、側欄、時空切換）
+index.html + style.css        首頁框架（景點列、主畫面、側欄、時空切換）
+src/shared/scene-switcher.js  景點列與景點目錄（registry.js 為共用純函式）
+src/streetscape/              現代街景（OSM 自動生成）
 public/app.js 等              臺中、彰化、臺北、高雄的引擎（three.min.js）
 src/shared/                   共用場景面板、設計變數、框架接口（docs/scene-contract.md）
 src/tainan/、src/anping/、src/yuanshan/    臺南、安平、圓山的獨立引擎（npm three）
@@ -73,7 +83,7 @@ tools/blender/                地標建模腳本
 重要地標用 Blender 依照片建模，匯出 GLB 放在 `public/models/`。模型以公尺建模、原點在 OSM 輪廓外接矩形中心、長邊沿 x、正面朝 Blender +y。共用函式在 `tools/blender/common.py`。
 ## 安平・大員
 
-首頁 `?place=anping`（臺南城市列可切換）。四個年代：1644 荷蘭熱蘭遮城與大員市鎮、1871 湯姆生拍下的殘牆、1935 日治史料館與燈塔、2026 今日安平古堡與老街。
+首頁 `?place=anping`（景點列或景點目錄可切換）。四個年代：1644 荷蘭熱蘭遮城與大員市鎮、1871 湯姆生拍下的殘牆、1935 日治史料館與燈塔、2026 今日安平古堡與老街。
 
 - 平面：城堡（上層主堡、下層主堡、外堡）與市鎮街廓 A–P 描自成大博物館今昔疊圖，以 OSM 現存外堡南牆校正（`src/anping/plan.js`，方法見重建依據表第 1 節）。
 - 現況：`public/data/anping.osm.json`（OSM，ODbL，2026-11-28 下載）。

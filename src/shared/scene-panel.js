@@ -29,6 +29,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
 <label class="sp-row" data-need="setWeather">天氣<select id="weather"></select></label>
 <label class="sp-row" data-need="setHour">時刻 <output id="clock"></output><input id="hour" type="range" min="0" max="23.75" step=".25" value="15.5"></label>
 <div class="sp-actions"><button id="tnWalk" data-need="toggleWalk" aria-pressed="false">漫步</button><button id="compare" data-need="compare">今昔並排</button><button id="share" data-need="shareURL">複製場景網址</button><button id="cleanView" aria-pressed="false" title="隱藏畫面上的按鈕與標題（H）">純畫面</button></div>
+<div class="sp-params" id="spParams" hidden></div>
 <div class="sp-toggles" id="spToggles" hidden></div>
 <div class="sp-links" id="spLinks" hidden></div>
 <details id="evidence" class="sp-evidence"><summary>重建依據與可信度</summary><table id="evTable"></table><p class="sp-note">A：${CONFIDENCE.A}　B：${CONFIDENCE.B}　C：${CONFIDENCE.C}</p></details>
@@ -110,6 +111,20 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
       const b = document.createElement('button'); b.textContent = t.label; if (t.title) b.title = t.title; b.setAttribute('aria-pressed', String(!!t.on()));
       b.onclick = () => { t.set(!t.on()); b.setAttribute('aria-pressed', String(!!t.on())); }; t.button = b; return b;
     }));
+    // 片場參數（選配）：params [{ id, label, min, max, step, unit, get(), set(v) }]、actions [{ label, title?, run() }]
+    const pr = el('spParams'); pr.hidden = !a.params?.length;
+    pr.replaceChildren(...(a.params || []).map(p => {
+      const row = document.createElement('label'); row.className = 'sp-row';
+      const fmt = v => (p.unit === '×' ? (+v).toFixed(2) : v) + (p.unit || '');
+      row.innerHTML = `${esc(p.label)} <output>${esc(fmt(p.get()))}</output><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.get()}" data-param="${esc(p.id)}">`;
+      const inp = row.querySelector('input'), out = row.querySelector('output');
+      inp.oninput = () => { p.set(+inp.value); out.textContent = fmt(inp.value); };
+      return row;
+    }));
+    for (const act of a.actions || []) {
+      const b = document.createElement('button'); b.textContent = act.label; if (act.title) b.title = act.title; b.className = 'sp-action';
+      b.onclick = () => act.run(); el('spToggles').append(b); el('spToggles').hidden = false;
+    }
     const links = el('spLinks'); links.hidden = !a.extraLinks?.length;
     links.innerHTML = (a.extraLinks || []).map(l => `<a href="${esc(l.href)}">${esc(l.label)}　↗</a>`).join('');
     // 共用框架按鈕（首頁原有場景保留自己的快門與縮放）

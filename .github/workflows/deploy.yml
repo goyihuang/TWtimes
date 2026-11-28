@@ -24,6 +24,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # 候選地景的現代街景先下載好 OSM 街區，網頁開啟較快；失敗不擋部署（網頁會改用瀏覽器即時查詢）
+      - run: npm run bake-osm
+        continue-on-error: true
+        timeout-minutes: 10
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

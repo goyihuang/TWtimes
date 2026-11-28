@@ -1,7 +1,8 @@
 {
   "version": 1,
   "updated": "2026-11-28",
-  "note": "今昔街影地景資料庫。新增地景只要在 scenes 加一筆，地圖、圖鑑與時間軸會同步出現。座標未查證者填 null（只出現在圖鑑，不上地圖）。status：live 已上線、dev 開發中、planned 候選。entry 只填已存在的頁面。",
+  "note": "今昔街影地景資料庫。新增地景只要在 scenes 加一筆，地圖、圖鑑與時間軸會同步出現。座標未查證者填 null（只出現在圖鑑，不上地圖）。status：live 已上線、dev 開發中、planned 候選。entry 只填已存在的頁面。 home：網站根目錄開啟的 3D 景點與首頁導覽卡的精選景點。有座標但未上線的地景，在景點目錄與地圖上提供「現代街景」（依 OSM 自動生成，./?place=osm&id=）。",
+  "home": { "scene": "tainan-station", "featured": ["tainan-station", "yuanshan", "taipei-station", "taichung-station", "kaohsiung-station"] },
   "taxonomy": {
     "periods": [
       { "id": "dutch", "label": "荷西・明鄭", "en": "DUTCH & KOXINGA", "from": 1624, "to": 1682 },
@@ -106,7 +107,7 @@
       "entry": "./?place=tainan", "status": "live", "confidence": "B"
     },
     {
-      "id": "anping-zeelandia", "name": "大員・熱蘭遮城與安平古堡", "nameEn": "Fort Zeelandia · Anping", "aliases": ["安平古堡", "熱蘭遮城", "臺灣城", "大員", "大員市鎮", "安平老街", "延平街", "Zeelandia", "Tayouan"],
+      "id": "anping-zeelandia", "name": "安平古堡・熱蘭遮城與大員市鎮", "nameEn": "Fort Zeelandia · Anping", "aliases": ["安平古堡", "熱蘭遮城", "臺灣城", "大員", "大員市鎮", "安平老街", "延平街", "Zeelandia", "Tayouan"],
       "city": "臺南市", "district": "安平區", "lat": 23.0015, "lng": 120.16085, "coordSource": "OSM 安平古堡平臺中心（public/data/anping.osm.json）",
       "types": ["城堡古蹟"], "themes": ["荷蘭時代", "城門城牆", "港口"], "buildingStatus": "已改建", "tags": ["荷蘭東印度公司", "熱蘭遮城", "大員市鎮", "湯姆生", "安平燈塔"],
       "eras": [{ "year": "1644", "period": "dutch" }, { "year": "1871", "period": "qing" }, { "year": "1935", "period": "japanese" }, { "year": "2026", "period": "modern" }],

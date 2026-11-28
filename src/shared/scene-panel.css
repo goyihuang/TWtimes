@@ -36,3 +36,5 @@
 .scene-panel-ready #browsePanel{overflow-y:auto;min-height:0;flex:1 1 auto;display:flex;flex-direction:column}
 .scene-panel-ready aside{min-height:0;overflow:hidden}
 @media(max-width:620px){.scene-panel-ready .control-bar{flex-wrap:wrap}.scene-panel-ready .sp-eras{flex:1 1 100%;order:2}.scene-panel-ready .shutter{margin-left:auto}}
+.sp-params{display:grid;gap:2px;padding:6px 0 2px;border-top:1px dashed var(--rule)}.sp-params[hidden]{display:none}
+.sp-toggles .sp-action{border-style:dashed}

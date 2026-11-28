@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#243b35"><title>今昔街影｜臺灣街景觀測所</title><meta name="description" content="走進臺北、臺中、彰化與高雄，在同一個視角切換今昔，收藏自己的街景攝影。"><link rel="stylesheet" href="style.css"><script>
-// 網站首頁改為全臺地圖；帶 place／分享參數的舊網址仍直接開啟街景
-if (!location.search && !location.hash) location.replace('map.html');
+// 首頁一打開就是 3D 街景（精選景點見 scene-registry.json 的 home）；全臺地圖在 map.html
+window.TW_HOME = !location.search && !location.hash;
+if (window.TW_HOME) history.replaceState(null, '', '?place=tainan');
 const sharedView = new URLSearchParams(location.hash.slice(1));
 // 臺中 1935 版已退場：舊分享網址 #era=1935&t=&w=&v= 轉到臺中場景（docs/scene-inventory.md）
 function to1935(h){const q=new URLSearchParams(h.replace(/^#/,'')),v=q.get('v')||'station',place=['miyahara','green','zhongshan'].includes(v)?'river':'station',u=new URL('./',location.href);u.searchParams.set('place',place);u.searchParams.set('era',q.get('era')==='today'?'now':'past');if(place==='station'&&v==='newstation')u.searchParams.set('shot','1');for(const k of['t','w'])if(q.has(k))u.searchParams.set(k,q.get(k));return u.href}
@@ -43,8 +44,11 @@ if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) location.replace(to
 <footer><div class="wrap"><a href="./taipei.html">臺北車站・五代今昔對照 ↗</a> <span>今昔街影 <i>/</i> 臺灣街景觀測所</span><a href="./?place=yuanshan">圓山・劍潭 四時代 ↗</a></div></footer>
 <dialog id="dialog"><div class="dialog-head"><div><div class="kicker" id="dialogEn"></div><h2 id="dialogTitle"></h2></div><button id="close" aria-label="關閉">×</button></div><div id="dialogBody"></div></dialog><p class="toast" id="toast" role="status" aria-live="polite"></p>
 <script defer src="three.min.js"></script><script defer src="geodata.js"></script><script defer src="archives.js"></script><script defer src="surfaces.js"></script><script defer src="precinct-data.js"></script><script defer src="station-precinct.js"></script><script defer src="elevated-station.js"></script><script defer src="pedestrians.js"></script><script defer src="landmark.js"></script><script defer src="taichu-arcade.js"></script><script defer src="forecourt.js"></script><script defer src="shophouse.js"></script><script defer src="changhua-map.js"></script><script defer src="changhua-rail.js"></script><script defer src="taipei-map.js"></script><script defer src="taipei-first-roads.js"></script><script defer src="taipei-generations.js"></script><script defer src="taipei-station.js"></script><script defer src="kaohsiung-map.js"></script><script defer src="kaohsiung-station.js"></script><script defer src="model.js"></script><script defer src="app.js"></script><script defer src="workshop.js"></script><script defer src="atlas-export.js"></script><script type="module">
-// 每個場景都掛上同一組共用面板（src/shared/）。臺南、圓山是獨立引擎，其餘沿用 app.js。
+// 每個場景都掛上同一組共用面板（src/shared/）。臺南、圓山、現代街景（osm）是獨立引擎，其餘沿用 app.js。
+// 景點切換選單與首頁導覽卡不等引擎載入，先掛上。
+import('./src/shared/scene-switcher.js').then(m=>m.mountSceneSwitcher()).catch(err=>console.warn(err));
+if(window.TW_HOME)import('./src/shared/home-welcome.js').then(m=>m.showWelcome()).catch(()=>{});
 const place=new URLSearchParams(location.search).get('place');
-const launch=()=>(place==='tainan'?import('./src/tainan/platform.js'):place==='anping'?import('./src/anping/platform.js'):place==='yuanshan'?import('./src/yuanshan/platform.js'):import('./src/shared/legacy-bridge.js')).catch(err=>{console.error(err);const l=document.getElementById('loading');l.hidden=false;l.textContent='街景載入失敗，請重新整理或開啟硬體加速。'});
+const launch=()=>(place==='tainan'?import('./src/tainan/platform.js'):place==='anping'?import('./src/anping/platform.js'):place==='yuanshan'?import('./src/yuanshan/platform.js'):place==='osm'?import('./src/streetscape/platform.js'):import('./src/shared/legacy-bridge.js')).catch(err=>{console.error(err);const l=document.getElementById('loading');l.hidden=false;l.textContent='街景載入失敗，請重新整理或開啟硬體加速。'});
 if(document.readyState==='complete')launch();else window.addEventListener('load',launch,{once:true});
 </script></body></html>

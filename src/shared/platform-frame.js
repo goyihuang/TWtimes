@@ -20,7 +20,7 @@ const CITY_FIRST = { taichung: 'station', changhua: 'changhua', taipei: 'taipei'
 export const placeButton = (p, active) => `<button class="place ${active ? 'active' : ''}" aria-pressed="${active}" data-key="${p.key}"><span class="place-thumb" style="background-image:url(${p.thumb})"></span><span><strong>${p.name}</strong><small>${p.en}</small></span><span class="goto">${active ? '●' : '›'}</span></button>`;
 
 export function setupModuleFrame({ key, heading, cityEn, english, canvasLabel }) {
-  const me = CATALOG.find(p => p.key === key);
+  const me = CATALOG.find(p => p.key === key) || { key, city: null };
   document.body.classList.add('module-platform');
   el('stage').innerHTML = `<canvas id="scene" aria-label="${canvasLabel}"></canvas>`;
   el('cityHeading').textContent = heading; el('cityEn').textContent = cityEn; el('viewEnglish').textContent = english;
