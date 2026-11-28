@@ -10,14 +10,20 @@
     "preview": "vite preview",
     "fetch-osm": "node scripts/fetch-osm.mjs",
     "bake-osm": "node scripts/bake-osm.mjs",
-    "test": "node tests/atlas-search.test.mjs && node tests/switcher-streetscape.test.mjs"
+    "test": "node tests/atlas-search.test.mjs && node tests/switcher-streetscape.test.mjs && node tests/world-tiles.test.mjs",
+    "e2e-world": "node tests/world-e2e.mjs"
   },
   "dependencies": {
+    "@mapbox/vector-tile": "^2.0.5",
+    "earcut": "^3.2.4",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
+    "pbf": "^4.0.2",
     "three": "^0.187.0"
   },
   "devDependencies": {
-    "vite": "^8.3.8"
+    "geojson-vt": "^5.0.4",
+    "vite": "^8.3.8",
+    "vt-pbf": "^3.1.3"
   }
 }

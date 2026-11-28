@@ -312,3 +312,23 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 2. 1871、1935 年代的街屋改用中研院歷史地圖的街廓（目前以今天老街外框示意）。
 3. 加上明鄭（1662 安平鎮城）年代與「城堡的四百年」導覽動線。
 4. OSM 安平建物不完整，可補老街實際店屋外框。
+
+## 20. 2026-11-28 全臺立體地景（Claude Code，分支 `claude/project-thread-1j6pe5`）
+**需求**：使用者看到どこでもロケハン，希望「先把臺灣基本立體地景都搭建好」，之後各景點的年代與故事疊在上面。同意的方案：全臺預先切好的圖磚、依鏡頭位置串流；地形用 DEM；樓高缺的用推估補。統一轉場與控制功能由另一條處理。完整說明見 `docs/world.md`。
+
+**本次修改**
+- 新場景 `?place=tw`：`src/world/`（tiles 四分樹 LOD、heights 樓高推估、sources 資料來源、tile-worker 背景生成、main 引擎、platform 掛載）。共用面板（鏡位、時刻、天氣、漫步、分享、片場參數、GLB）。
+- 資料：向量圖磚 OpenFreeMap（OpenMapTiles 架構，OSM ODbL），地形 AWS Terrain Tiles（Terrarium）。本站不存全臺資料，不受 Pages 容量限制。
+- 接線：`index.html` 啟動分支、`public/app.js` 的 `MODULE_PLACES` 加 `tw`、`registry.js` 的 `worldHref` 與 `currentScene`、景點列「全臺立體」、首頁導覽卡、地圖點選彈窗。
+- 依賴：`@mapbox/vector-tile`、`pbf`、`earcut`；測試用 devDependencies `geojson-vt`、`vt-pbf`。
+- 測試：`tests/world-tiles.test.mjs`（併入 `npm test`）；`tests/world-e2e.mjs`＋`world-fixtures.mjs`（雲端用臺南站區 OSM 模擬向量圖磚）。
+
+**注意**
+- 雲端容器連不到 OpenFreeMap（AWS 地形可以）。真實圖磚只在使用者瀏覽器驗證過資料可讀；整個畫面要上線後在使用者瀏覽器看。
+- OpenMapTiles 的 `render_height` 在沒有樓高標籤時是 5 m，程式視為未知再推估。
+- 地形圖磚的 z14 取 z13 的四分之一；Worker 內需要 OffscreenCanvas（Safari 16.4+）。
+
+**下一步**
+1. 合併後在使用者瀏覽器檢查臺北、臺中市區的建物量與幀率，必要時調 `tiles.js` 的 `FACTOR`。
+2. 選配：自架臺灣 PMTiles（Planetiler）、內政部 20 m DEM、國土測繪中心建物樓高。
+3. 把各景點的歷史層疊上來（建物「長出來」轉場可直接套用在這層的建物量體上）。

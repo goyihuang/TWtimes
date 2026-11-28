@@ -10,6 +10,7 @@
 | `src/shared/scene-panel.js`／`.css` | 共用面板：年代列、鏡位、焦距、天氣、時刻、漫步、今昔並排、分享、純畫面、場景開關、重建依據表 |
 | `src/shared/platform-frame.js` | 獨立引擎（臺南、圓山、現代街景）接上首頁框架：城市列、取景地點、街景索引；全站街景目錄 `CATALOG` |
 | `src/shared/scene-switcher.js`／`registry.js` | 景點列與景點目錄（Ctrl＋K），資料取自 `scene-registry.json` |
+| `src/world/` | 全臺立體地景（圖磚串流 LOD），`?place=tw` |
 | `src/streetscape/` | 現代街景引擎（OSM 自動生成），`?place=osm&id=<registry id>` 或 `?place=osm&lat=&lng=&name=` |
 | `src/shared/legacy-bridge.js` | 首頁原有場景（`public/app.js`：臺中三處、彰化兩處、臺北、高雄）轉成場景 API |
 | `src/tainan/platform.js`、`src/yuanshan/platform.js` | 兩個獨立引擎的掛載點 |
@@ -53,6 +54,7 @@ panel.bind(api);
 | 臺北 | `?place=taipei&generation=1–5&shot=…&cam=…` | `?place=taipei&generation=n` |
 | 臺南 | `?place=tainan&era=1920…2026&t=&w=&mm=&cam=&walk=1` | `tainan.html?era=0&shot=4`（轉址） |
 | 現代街景 | `?place=osm&id=<id>`（或 `&lat=&lng=&name=`）`&t=&w=&mm=&cam=&walk=1&seed=&hs=&rs=&r=&clay=1&trees=0&props=0` | — |
+| 全臺立體地景 | `?place=tw`（或 `&id=`、`&ll=緯度,經度`）`&d=&hd=&pt=&t=&w=&mm=&seed=&hs=&rs=&ex=&clay=1&trees=0&labels=0&walk=1`（見 `docs/world.md`） | — |
 | 圓山 | `?place=yuanshan&era=1–4&t=&w=&mm=&cam=` | `yuanshan.html?era=…&shot=…&paint=1`（轉址）、`?place=yuanshan` |
 | 臺中 1935（已退場） | — | `taichung-1935.html#era=1935&t=&w=&v=`、`./#era=…` 轉到 `?place=station`（或 `river`）並帶 `era`、`t`、`w` |
 
