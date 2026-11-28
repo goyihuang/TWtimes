@@ -47,7 +47,9 @@ const panel = mountScenePanel({ title: '', en: '' });
 let boundKey = null;
 const api = {
   keepCaption: true, frameButtons: false,
-  get state() { const s = SA(); return { era: s.isTaipei ? (s.modern ? 4 : s.tpPast - 1) : (s.modern ? 1 : 0), shot: s.shot, mm: s.mm, walk: s.walking }; },
+  get state() { const s = SA(); return { era: s.isTaipei ? (s.modern ? 4 : s.tpPast - 1) : (s.modern ? 1 : 0), shot: s.shot, mm: s.mm, walk: s.walking, hour: s.hour, weather: s.weather }; },
+  weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '霧' },
+  setHour: h => SA().setHour(h), setWeather: w => SA().setWeather(w),
   setEra(i) { const s = SA(); if (s.isTaipei) s.setGeneration(i + 1); else if (i) s.setNow(); else s.setPast(); },
   setShot: i => SA().setShot(i), setFocal: mm => SA().setFocal(mm), toggleWalk: () => SA().toggleWalk(), zoom: f => SA().zoom(f),
   compare: () => SA().compare(), snapshot: () => SA().snapshot(), shareURL: () => SA().shareURL(),
@@ -65,7 +67,7 @@ function refresh() {
     boundKey = key; api.eras = eras(); api.shots = s.shots();
     api.extraLinks = key === 'taipei' ? [{ label: '五代站房影像對照', href: 'taipei.html' }] : [];
     panel.bind(api);
-  } else panel.sync();
+  } else { panel.sync(); panel.ui.onHour(s.hour); panel.ui.onWeather(s.weather); }
 }
 addEventListener('atlas-change', refresh);
 refresh();

@@ -3,9 +3,9 @@
 // 網站首頁改為全臺地圖；帶 place／分享參數的舊網址仍直接開啟街景
 if (!location.search && !location.hash) location.replace('map.html');
 const sharedView = new URLSearchParams(location.hash.slice(1));
-if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) {
-  location.replace('taichung-1935.html' + location.search + location.hash);
-}
+// 臺中 1935 版已退場：舊分享網址 #era=1935&t=&w=&v= 轉到臺中場景（docs/scene-inventory.md）
+function to1935(h){const q=new URLSearchParams(h.replace(/^#/,'')),v=q.get('v')||'station',place=['miyahara','green','zhongshan'].includes(v)?'river':'station',u=new URL('./',location.href);u.searchParams.set('place',place);u.searchParams.set('era',q.get('era')==='today'?'now':'past');if(place==='station'&&v==='newstation')u.searchParams.set('shot','1');for(const k of['t','w'])if(q.has(k))u.searchParams.set(k,q.get(k));return u.href}
+if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) location.replace(to1935(location.hash));
 </script></head><body>
 <svg aria-hidden="true" class="sprites" xmlns="http://www.w3.org/2000/svg"><defs>
 <symbol id="map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2zM9 3v16M15 5v16"/></symbol>
@@ -40,7 +40,7 @@ if (['era', 't', 'w', 'v'].some(key => sharedView.has(key))) {
 <p class="work-note" id="editStatus" role="status">兩個年代的改動會分別儲存在此瀏覽器。</p></section></aside>
 <div class="control-bar"><div class="time-label"><span class="kicker">TIME SWITCH</span><strong>時空切換</strong></div><div class="time-switch" aria-label="切換年代"><button id="old" aria-pressed="false">昔 <span>1930 年代</span></button><button id="now" aria-pressed="true">今 <span>當代</span></button></div><button id="shutter" class="shutter"><svg><use href="#camera"/></svg>拍攝街景</button></div></section>
 <div class="under"><span><b></b><em id="modelInfo">歷史影像參照重建</em></span><div class="under-actions"><button id="crowdMotion" aria-pressed="true">暫停行人</button><button id="exportAtlas" title="在本機匯出 1280 × 720 的深度圖與相機參數，供 Atlas Chisel API 使用">匯出 Atlas 鏡位 ↓</button><button id="sourceBtn">街景與資料來源 ↗</button></div></div></main>
-<footer><div class="wrap"><a href="./taipei.html">臺北車站・五代今昔對照 ↗</a> <span>今昔街影 <i>/</i> 臺灣街景觀測所</span><a href="./taichung-1935.html">臺中驛前 1935・天氣與日夜版 ↗</a> <a href="./?place=yuanshan">圓山・劍潭 四時代 ↗</a></div></footer>
+<footer><div class="wrap"><a href="./taipei.html">臺北車站・五代今昔對照 ↗</a> <span>今昔街影 <i>/</i> 臺灣街景觀測所</span><a href="./?place=yuanshan">圓山・劍潭 四時代 ↗</a></div></footer>
 <dialog id="dialog"><div class="dialog-head"><div><div class="kicker" id="dialogEn"></div><h2 id="dialogTitle"></h2></div><button id="close" aria-label="關閉">×</button></div><div id="dialogBody"></div></dialog><p class="toast" id="toast" role="status" aria-live="polite"></p>
 <script defer src="three.min.js"></script><script defer src="geodata.js"></script><script defer src="archives.js"></script><script defer src="surfaces.js"></script><script defer src="precinct-data.js"></script><script defer src="station-precinct.js"></script><script defer src="elevated-station.js"></script><script defer src="pedestrians.js"></script><script defer src="landmark.js"></script><script defer src="taichu-arcade.js"></script><script defer src="forecourt.js"></script><script defer src="shophouse.js"></script><script defer src="changhua-map.js"></script><script defer src="changhua-rail.js"></script><script defer src="taipei-map.js"></script><script defer src="taipei-first-roads.js"></script><script defer src="taipei-generations.js"></script><script defer src="taipei-station.js"></script><script defer src="kaohsiung-map.js"></script><script defer src="kaohsiung-station.js"></script><script defer src="model.js"></script><script defer src="app.js"></script><script defer src="workshop.js"></script><script defer src="atlas-export.js"></script><script type="module">
 // 每個場景都掛上同一組共用面板（src/shared/）。臺南、圓山是獨立引擎，其餘沿用 app.js。

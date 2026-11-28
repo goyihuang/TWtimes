@@ -1,18 +1,5 @@
-<!doctype html>
-<html lang="zh-Hant-TW">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>今昔時空｜臺中驛前 1935 ⇄ 現今</title>
-  <meta name="description" content="在瀏覽器裡漫步臺中車站周邊，即時切換 1935 年與現今街景，調整天氣、日夜，並在場景中拍照。" />
-  <meta property="og:title" content="今昔時空｜臺中驛前 1935 ⇄ 現今" />
-  <meta property="og:description" content="即時切換時代的台灣立體街景，可漫步、改街景、拍照。" />
-  <meta name="theme-color" content="#1b1814" />
-</head>
-<body>
-  <canvas id="scene"></canvas>
-  <div id="ui"></div>
-  <div id="status">載入中…</div>
-  <script type="module" src="/src/main.js"></script>
-</body>
-</html>
+<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>臺中驛前｜今昔街影</title>
+<script>/* 臺中 1935 版已退場（站房與舊照不符），天氣與時刻已移到臺中場景。舊網址轉過去並保留年代、時刻、天氣。 */
+function to1935(h){const q=new URLSearchParams(h.replace(/^#/,'')),v=q.get('v')||'station',place=['miyahara','green','zhongshan'].includes(v)?'river':'station',u=new URL('./',location.href);u.searchParams.set('place',place);u.searchParams.set('era',q.get('era')==='today'?'now':'past');if(place==='station'&&v==='newstation')u.searchParams.set('shot','1');for(const k of['t','w'])if(q.has(k))u.searchParams.set(k,q.get(k));return u.href}
+location.replace(to1935(location.hash))</script>
+</head><body><p><a href="./?place=station&amp;era=past">前往臺中驛前 →</a></p></body></html>

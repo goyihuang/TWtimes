@@ -264,3 +264,10 @@ G:\Ai Data\今昔\全台車站 共有 17 張 PNG、22 支 MP4。「10台南.png�
 2. `app.js` 場景補光影（色調映射、年代調色、時刻天氣），可沿用臺南做法；長期把 `app.js` 改 ES module，去掉 `three.min.js` 舊版。
 3. 每個場景補到六鏡位；圓山加漫步。
 4. 使用者電腦開機後，依 `docs/source-cards.md` 先整理臺中、新竹的史料卡。
+
+### 17-1. 臺中 1935 版退場（使用者選「先移植功能再退場」）
+- `public/app.js` 新增時刻（太陽方位、光色、夜間變暗）與天氣（晴、多雲、雨線、霧），經共用面板對臺中、彰化、臺北、高雄開放；使用者調整或網址帶 `t`、`w` 才啟用，預設畫面不變；分享網址含 `t`、`w`。
+- `taichung-1935.html` 與首頁 `#era=…&v=…` 舊網址轉到 `?place=station`（綠川一帶轉 `river`），年代、時刻、天氣照帶。registry 移除 `taichung-1935`。
+- 刪除 1935 版引擎：`src/main.js` 等根目錄模組、`src/builders/`、`station1917/2016.glb` 與腳本、`taichung-station.osm.json`、`thumbs/taichung-1935.jpg`。
+- 未移植：街寬編輯、州廳／市役所／第二市場／臺中公園鏡位、夜間路燈光池。
+- 實測：舊網址轉址（含 t、w）、時刻天氣切換、分享重開還原、彰化霧天，無錯誤。截圖 `docs/unify/taichung-night-rain.jpg`、`taichung-dusk.jpg`、`changhua-fog.jpg`。
