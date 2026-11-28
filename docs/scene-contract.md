@@ -25,6 +25,8 @@
   shots: [{ name }],
   state: { era, shot, mm?, weather?, hour?, walk? },   // 可用 getter
   setEra(i), setShot(i), snapshot() /* → canvas */, compare() /* → { canvas, title } */, shareURL() /* → string */,
+  // 時間軸拖曳（選配，src/shared/timeline.js）：沒有就改成越過中點直接切換
+  scrub(a, b, k), endScrub(target),   // a < b 相鄰年代，k 0–1；放開時 target 是 a 或 b
   // 選配：沒有就不顯示對應控制項
   setFocal(mm), setWeather(key), weathers: { key: '名稱' }, setHour(h), toggleWalk(), zoom(f),
   toggles: [{ id, label, title?, on(), set(v) }],   // 場景特有開關，例：圓山的膠彩筆觸
@@ -95,3 +97,21 @@ if (TRANSITION.mode === 'grow') { const from = oldGroup; showOnly(newGroup); gro
 ## 片場工具（`src/shared/scene-tools.js`）
 
 共用面板底部同一組，依場景 API 能力自動出現：年代轉場與轉場時間、構圖框（三分線、16:9、2.39:1、4:5、9:16、1:1；快門依比例裁切）、縮時（每 2 秒 1 小時）、緩緩環繞、白模檢視、匯出 GLB。場景自己已有同名功能（圓山的環繞、現代街景的白模與匯出）時不重複。
+
+## 時間軸（`src/shared/timeline.js`）
+
+年代列改成一條可拖曳的時間軸（取代一排按鈕），所有場景共用，由 `scene-panel.js` 掛上：
+
+- 拖曳把手：在相鄰兩個年代之間連續過渡。場景有 `scrub(a, b, k)` 時，畫面停在轉場進度 k（建物長到一半、地面溶解到一半）；放開後 `endScrub(target)` 以剩下的進度播完（或倒退回原年代）。
+- 點刻度或軌道：播放轉場到該年代；▶：依序走過每個年代（每站停約 2.6 秒）。
+- 鍵盤（焦點在時間軸）：← → 換年代、Home／End、空白鍵播放；滾輪在時間軸上也能換年代。
+- 減少動態效果或轉場設為「直接切換」時：拖曳越過中點就切換，不做連續過渡。
+
+引擎接法：每個年代一個群組的引擎用 `eraScrubber()`（`era-grow.js`），只要給 `group(i)`、`center()`、`apply(i)`、`current()`，選配 `blend(a, b, k)` 內插調色：
+
+```js
+const scrubber = eraScrubber({ grow, group: i => eras[i].group, center: () => controls.target, apply: i => applyEra(i), current: () => state.era });
+return { …, scrub: scrubber.scrub, endScrub: scrubber.endScrub };
+```
+
+底層是 `grow.scrub(from, to, center, k)`（停在進度 k）與 `grow.settle(forward, onDone)`（放開後往前播完或倒退）。圓山用自己的著色器，`App.scrubEra()` 直接控制 `eraT`。app.js 場景（臺中、彰化、高雄）的昔今兩代支援拖曳；臺北五代站房沒有 scrub。

@@ -175,6 +175,10 @@ if(p.look)focus={x:p.look[0],y:p.look[1],z:p.look[2]};
 if(plaza)focus=entranceLens?{x:191,y:16,z:131}:{x:115,y:11.5,z:192};
 const view=plaza?(entranceLens?[102,4.2,145]:[10,4.3,145]):p.camera;
 let dx=view[0]-focus.x,dy=view[1]-focus.y,dz=view[2]-focus.z;distance=Math.hypot(dx,dy,dz);theta=Math.atan2(dx,dz);elevation=Math.asin(dy/distance);eye=index===0&&plazaLens?(entranceLens?{x:111,z:144}:{x:53,z:146}):{x:p.walk[0],z:p.walk[1]};heading=Math.atan2(focus.x-eye.x,focus.z-eye.z);pitch=.045;if(isTaipei())frameTaipei();if(i===0&&arcadeLens)setArcadePose();dirty=true;window.atlasWorkshop?.placeChanged()}
+// 時間軸拖曳（src/shared/timeline.js）：昔今之間停在任一進度；臺北五代站房不支援（直接切換）
+function eraSnap(m){if(modern===m)return;modern=m;syncArcadeLink(new URL(location.href));updateLabels();dirty=true}
+function eraScrub(k){const g=window.eraGrow;if(!g||isTaipei())return;if(!g.active||g.pair?.[0]!==worlds[0]){window.atlasWorkshop?.beforeEra();g.finish()}g.scrub(worlds[0],worlds[1],walking?{x:eye.x,y:0,z:eye.z}:focus,k);eraSnap(k>=.5);worlds[0].visible=worlds[1].visible=true;dirty=true}
+function eraEndScrub(now){const g=window.eraGrow;if(!g)return;g.settle(now,w=>{const m=w==='to';worlds.forEach((x,i)=>x.visible=i===Number(m));eraSnap(m);window.atlasWorkshop?.eraChanged();dirty=true});dirty=true}
 function setEra(next){if(!ready||modern===next)return;if(isTaipei()){changeTaipei(next?5:tpPast);return}window.atlasWorkshop?.beforeEra();eraGrowFinish();const from=worlds[Number(modern)];modern=next;syncArcadeLink(new URL(location.href));worlds.forEach((w,i)=>w.visible=i===Number(modern));eraGrowStart(from,worlds[Number(modern)]);updateLabels();window.atlasWorkshop?.eraChanged();dirty=true}
 $('old').onclick=()=>setEra(false);$('now').onclick=()=>setEra(true);
 function setMode(value){if(walking===value)return;walking=value;held.clear();if(walking){const p=places[index];eye=index===0&&plazaLens?(entranceLens?{x:111,z:144}:{x:53,z:146}):{x:p.walk[0],z:p.walk[1]};heading=Math.atan2(focus.x-eye.x,focus.z-eye.z);pitch=.04;if(isTaipei()){const r=tpActive();eye={x:r.x+r.offset[0],z:r.z+r.offset[2]};heading=Math.atan2(r.x-eye.x,r.z-eye.z);pitch=Math.atan2(r.height-1.75,Math.hypot(r.offset[0],r.offset[2]))}if(index===0&&arcadeLens)setArcadePose()}updateLabels();dirty=true}
@@ -300,6 +304,7 @@ window.streetAtlas={
  shots:()=>shotsFor().map(([name])=>({name})),
  setShot:applyShot,
  setPast(){setEra(false)},setNow(){setEra(true)},
+ scrubEra:eraScrub,endScrubEra:eraEndScrub,
  setGeneration(n){changeTaipei(n)},
  toggleWalk(){setMode(!walking);return walking},
  setFocal(mm){lensMM=mm;dirty=true},

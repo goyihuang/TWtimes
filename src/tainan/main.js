@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
-import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
+import { createEraGrow, eraScrubber, TRANSITION } from '../shared/era-grow.js';
 import { OSM_CREDIT } from '../shared/credits.js';
 import { ERAS, SHOTS, mmToFov } from './eras.js';
 import { loadOSM } from './osm.js';
@@ -147,6 +147,9 @@ export async function createTainan(canvas, ui = {}) {
     const from = eras[state.era].group; applyEra(i);
     grow.start(from, eras[i].group, state.walk ? camera.position : controls.target);
   }
+  // 時間軸拖曳：兩個年代之間停在任一進度（src/shared/timeline.js）
+  const scrubber = eraScrubber({ grow, group: i => eras[i].group, center: () => state.walk ? camera.position : controls.target, apply: i => applyEra(i), current: () => state.era,
+    blend: (a, b, k) => { const A = ERAS[a].grade, B = ERAS[b].grade; if (A && B) post.setGrade(Object.fromEntries(Object.keys(A).map(key => [key, typeof A[key] === 'number' && typeof B[key] === 'number' ? A[key] + (B[key] - A[key]) * k : (k < 0.5 ? A : B)[key]]))); } });
 
   function climate() {
     const { v, elev } = sunDir(state.hour), w = state.weather;
@@ -283,7 +286,7 @@ export async function createTainan(canvas, ui = {}) {
     transitions: ['grow', 'fade', 'cut'], exportRoot: () => eras[state.era].group,
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '晨霧' },
-    setEra, setShot, setFocal, compare, snapshot, shareURL,
+    setEra, setShot, setFocal, compare, snapshot, shareURL, scrub: scrubber.scrub, endScrub: scrubber.endScrub,
     setHour(h) { state.hour = h; climate(); }, setWeather(w) { state.weather = w; climate(); },
     toggleWalk() { state.walk ? exitWalk() : enterWalk(); return state.walk; },
     zoom(f) { if (state.walk) { setFocal(Math.max(14, Math.min(135, state.mm / f))); return; } camera.position.sub(controls.target).multiplyScalar(f).add(controls.target); controls.update(); },

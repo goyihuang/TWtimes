@@ -188,29 +188,54 @@ export function createEraGrow(THREE, defaults = {}) {
       }
       prepare(to, 'in'); prepare(from, 'out');
       if (from) from.visible = true; if (to) to.visible = true;
-      run = { from, to, t: 0, dur: opts.seconds ?? TRANSITION.seconds, band, jit, R, mid: false, onDone: opts.onDone };
+      run = { from, to, t: 0, dur: opts.seconds ?? TRANSITION.seconds, band, jit, R, mid: false, dir: 1, hold: false, onDone: opts.onDone };
       api.update(0);
     },
     update(dt) {
       if (!run) return false;
-      if (!api.hold) run.t = Math.min(run.dur, run.t + dt);
+      if (!api.hold && !run.hold) run.t = Math.max(0, Math.min(run.dur, run.t + dt * run.dir));
       const k = run.t / run.dur, e = k * k * (3 - 2 * k);
       const F = e * (1 + run.jit + run.band);
       U.in.uGrowF.value = U.out.uGrowF.value = F;
-      if (!run.mid && k >= 0.5) {
-        run.mid = true;
-        for (const p of popped) p[0].visible = p[2] === 'in' ? p[1] : false;
+      // 線、點、精靈等在中點切換；拖曳時間軸可能來回越過中點，所以每次都依目前一側決定
+      const mid = k >= 0.5;
+      if (mid !== run.mid) {
+        run.mid = mid;
+        for (const p of popped) p[0].visible = (p[2] === 'in') === mid ? p[1] : false;
       }
-      if (run.t >= run.dur) api.finish();
+      if (!api.hold && !run.hold) {
+        if (run.dir > 0 && run.t >= run.dur) api.finish();
+        else if (run.dir < 0 && run.t <= 0) api.finish();
+      }
       return true;
     },
     finish() {
       if (!run) return;
       const r = run; run = null;
       restore();
-      if (r.from && r.from !== r.to) r.from.visible = false;
-      if (r.to) r.to.visible = true;
-      r.onDone?.();
+      // 倒退收尾（時間軸拖回原年代）：留下舊年代
+      const keep = r.dir < 0 ? r.from : r.to, drop = r.dir < 0 ? r.to : r.from;
+      if (drop && drop !== keep) drop.visible = false;
+      if (keep) keep.visible = true;
+      r.onDone?.(r.dir < 0 ? 'from' : 'to');
+    },
+    /** 目前這一輪的兩端（給時間軸判斷是否同一段） */
+    get pair() { return run ? [run.from, run.to] : null; },
+    /**
+     * 時間軸拖曳：停在進度 k（0–1），不自己前進。同一對年代重複呼叫只更新進度。
+     * opts 同 start。
+     */
+    scrub(from, to, center, k, opts = {}) {
+      if (!run || run.from !== from || run.to !== to) api.start(from, to, center, opts);
+      run.hold = true; run.dir = 1;
+      run.t = Math.max(0, Math.min(1, k)) * run.dur; api.update(0);
+    },
+    /** 放開時間軸：forward 為 true 播完到新年代，false 倒退回舊年代；剩下的進度照比例用時 */
+    settle(forward, onDone) {
+      if (!run) { onDone?.(forward ? 'to' : 'from'); return; }
+      run.hold = false; run.dir = forward ? 1 : -1;
+      if (onDone) { const prev = run.onDone; run.onDone = w => { prev?.(w); onDone(w); }; }
+      api.update(0);
     },
     uniforms: U,
     hold: false,   // 測試用：凍結進度
@@ -218,4 +243,29 @@ export function createEraGrow(THREE, defaults = {}) {
     seek(k) { if (run) { run.t = Math.max(0, Math.min(1, k)) * run.dur; api.update(0); } },
   };
   return api;
+}
+
+/**
+ * 時間軸拖曳的共用接法（給「每個年代一個群組」的引擎：臺南、安平、app.js）。
+ *   group(i)：第 i 個年代的根節點；center()：波紋圓心；apply(i)：切到第 i 個年代（不播動畫，會更新面板）
+ *   current()：目前年代；blend(a, b, k)：選配，拖曳時內插調色等連續量
+ * 回傳 { scrub(a, b, k), endScrub(target) }，直接放進場景 API。
+ */
+export function eraScrubber({ grow, group, center, apply, current, opts, blend }) {
+  let cur = null;
+  const show = () => { if (cur) { const A = group(cur.a), B = group(cur.b); if (A) A.visible = true; if (B) B.visible = true; } };
+  return {
+    scrub(a, b, k) {
+      if (!cur || cur.a !== a || cur.b !== b) { grow.finish(); if (current() !== a && current() !== b) apply(a); cur = { a, b }; }
+      grow.scrub(group(a), group(b), center(), k, opts?.());
+      const near = k >= 0.5 ? b : a;
+      if (current() !== near) apply(near);
+      show(); blend?.(a, b, k);   // 調色等連續量：在兩個年代之間內插
+    },
+    endScrub(target) {
+      if (!cur) return;
+      const { a, b } = cur; cur = null;
+      grow.settle(target === b, w => apply(w === 'to' ? b : a));
+    },
+  };
 }

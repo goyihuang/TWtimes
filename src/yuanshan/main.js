@@ -149,6 +149,24 @@ class App {
     const url = new URL(location.href); url.searchParams.set('place', 'yuanshan'); url.searchParams.set('era', i + 1); history.replaceState(null, '', url);
   }
 
+  // 時間軸拖曳（src/shared/timeline.js）：停在 a → b 的進度 k；放開時 endScrub 播完或倒退
+  scrubEra(a, b, k) {
+    if (TRANSITION.mode === 'cut') { this.setEra(k < 0.5 ? a : b, true); return; }
+    if (this.eraFrom !== a || this.era !== b || !this.eraHold) {
+      const mood = this.autoMood; this.autoMood = false;
+      this.era = a; this.setEra(b); this.eraFrom = a; this.autoMood = mood; this.flash = 0;
+    }
+    this.eraHold = true; this.eraDir = 1; this.eraT = Math.max(0, Math.min(1, k));
+    const near = k >= 0.5 ? b : a; if (this.scrubNear !== near) { this.scrubNear = near; ui.onEra?.(near); }
+  }
+  endScrub(target) {
+    if (!this.eraHold) return;
+    this.eraHold = false; this.scrubNear = null;
+    const a = this.eraFrom, b = this.era;
+    if (target === b) { this.eraDir = 1; this.eraDone = null; ui.onEra?.(b); return; }
+    this.eraDir = -1; this.eraDone = () => this.setEra(a, true); ui.onEra?.(a);
+  }
+
   setHour(h) { this.atmo.hour = ((h % 24) + 24) % 24; this.hourTween = null; this.syncTime(); }
   tweenHour(h) { let from = this.atmo.hour, to = h; if (Math.abs(to - from) > 12) to += to < from ? 24 : -24; this.hourTween = { from, to, t: 0 }; }
   syncTime() {
@@ -228,7 +246,8 @@ class App {
     // 自動降解析度
     this.frames++; if (dt > 0.045) this.slow++; if (this.frames % 90 === 0) { if (this.slow > 60 && this.pr > 0.7) { this.pr = Math.max(0.7, this.pr - 0.2); this.renderer.setPixelRatio(this.pr); this.resize(); } this.slow = 0; }
     // 時代轉場
-    if (this.eraT < 1) this.eraT = Math.min(1, this.eraT + dt / TRANSITION.seconds);
+    if (!this.eraHold && this.eraDir === -1) { this.eraT = Math.max(0, this.eraT - dt / TRANSITION.seconds); if (this.eraT <= 0) { this.eraDir = 1; const d = this.eraDone; this.eraDone = null; d?.(); } }
+    else if (!this.eraHold && this.eraT < 1) this.eraT = Math.min(1, this.eraT + dt / TRANSITION.seconds);
     const k = this.eraT, ease = k * k * (3 - 2 * k);
     const ev = [0, 0, 0, 0]; ev[this.era] = ease; if (this.eraFrom !== this.era) ev[this.eraFrom] = Math.max(ev[this.eraFrom], 1 - ease); else ev[this.era] = 1;
     G.uEra.value.set(...ev);
@@ -293,7 +312,8 @@ export async function createYuanshan(canvas, callbacks = {}) {
   return {
     app, eras, shots: SHOTS, state, transitions: ['grow', 'cut'], controls: app.controls,
     weathers: Object.fromEntries(Object.entries(WEATHER).map(([k, w]) => [k, w.name])),
-    setEra: i => app.setEra(i), setShot: i => app.goShot(i), setFocal: mm => app.setFocal(mm),
+    setEra: i => { app.eraHold = false; app.eraDir = 1; app.setEra(i); }, setShot: i => app.goShot(i), setFocal: mm => app.setFocal(mm),
+    scrub: (a, b, k) => app.scrubEra(a, b, k), endScrub: t => app.endScrub(t),
     setHour: h => app.setHour(h), setWeather: w => app.setWeather(w),
     zoom(f) { const c = app.controls; app.camera.position.sub(c.target).multiplyScalar(f).add(c.target); c.update(); },
     snapshot: () => app.photo(),
