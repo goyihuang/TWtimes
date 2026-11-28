@@ -9,9 +9,18 @@
 - 中研院歷史圖層 9 種（1897–1956），可調透明度、用古今滑桿比對（CC BY-NC，限非商業）。
 - 地景資料在 `public/data/scene-registry.json`，新增一筆即同步出現在三種模式。細節見 [docs/atlas.md](docs/atlas.md)。
 
+## 統一介面與美術規範
+
+所有 3D 場景都在首頁框架 `?place=<key>` 開啟，共用同一組控制項（年代列、鏡位、焦距、天氣、時刻、漫步、今昔並排、分享、純畫面、重建依據與可信度），程式在 `src/shared/`。
+
+- [docs/art-direction.md](docs/art-direction.md)：美術與介面規範、新場景驗收表
+- [docs/scene-contract.md](docs/scene-contract.md)：場景 API 與分享網址
+- [docs/scene-inventory.md](docs/scene-inventory.md)：各場景盤點、臺中兩版本比對、待辦
+- [docs/source-cards.md](docs/source-cards.md)：新景點先做平面圖文整理的格式與進 3D 門檻
+
 ## 圓山・劍潭　四時代（臺灣八景）
 
-[進入圓山・劍潭](https://goyihuang.github.io/TWtimes/yuanshan.html)（或 `?place=yuanshan`）：臺灣神社與明治橋、基隆河、劍潭山的四個時代。
+[進入圓山・劍潭](https://goyihuang.github.io/TWtimes/?place=yuanshan)（舊網址 `yuanshan.html` 會自動轉過來）：臺灣神社與明治橋、基隆河、劍潭山的四個時代。
 
 | 時代 | 場景 |
 | --- | --- |

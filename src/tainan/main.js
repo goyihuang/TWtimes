@@ -273,6 +273,8 @@ export async function createTainan(canvas, ui = {}) {
 
   return {
     renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state,
+    walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
+    weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '晨霧' },
     setEra, setShot, setFocal, compare, snapshot, shareURL,
     setHour(h) { state.hour = h; climate(); }, setWeather(w) { state.weather = w; climate(); },
     toggleWalk() { state.walk ? exitWalk() : enterWalk(); return state.walk; },

@@ -38,6 +38,8 @@ function syncArcadeLink(url){
   if(index===0&&arcadeLens){url.searchParams.set('view','arcade');url.searchParams.set('era',modern?'now':'past')}
   else if(url.searchParams.get('view')==='arcade'){url.searchParams.delete('view');url.searchParams.delete('era')}
   if(isTaipei())url.searchParams.set('generation',modern?5:tpPast);else url.searchParams.delete('generation');
+  if(!(index===0&&arcadeLens)&&!isTaipei()&&url.searchParams.has('era'))url.searchParams.set('era',modern?'now':'past');
+  if(window.streetAtlas?.restored)for(const k of ['shot','cam','walk'])url.searchParams.delete(k);
   history.replaceState(null,'',url);
 }
 window.addEventListener('street-texture-ready',()=>{dirty=true});
@@ -146,9 +148,10 @@ if(isTaipei()){const r=tpActive();$('tpGeneration').value=String(modern?5:tpPast
  $('tpCompare').href='taipei.html?left='+(modern?tpPast:n)+'&right=5';
 }
 for(const key of Object.keys(cities))$(key+'City').setAttribute('aria-pressed',String(key===city));
-$('destination').value=String(index);$('taipeiLenses').hidden=!['taipei','kaohsiung'].includes(city);$('tpWide').textContent=city==='kaohsiung'?'俯瞰站區':'站區全景';$('tpClose').textContent=city==='kaohsiung'?'近看帝冠站房':'近看本年代站房';$('old').querySelector('span').textContent=pastLabel();$('viewName').textContent=placeTitle();$('stationLenses').hidden=index!==0;$('plazaView').setAttribute('aria-pressed',String(plazaLens&&!entranceLens));$('entranceView').setAttribute('aria-pressed',String(entranceLens));$('heritageView').setAttribute('aria-pressed',String(!plazaLens&&!arcadeLens));$('arcadeView').setAttribute('aria-pressed',String(arcadeLens));$('arcadeStudy').hidden=!arcadeLens;$('viewYear').textContent=modern?'Present day':isTaipei()?tpActive().period:pastYear()+'s';$('viewEnglish').textContent=index===0&&modern&&plazaLens?'TAICHUNG STATION':place.en;$('old').setAttribute('aria-pressed',String(!modern));$('now').setAttribute('aria-pressed',String(modern));$('modelInfo').textContent=modern?'當代圖資 · 依地圖與影像重建':pastLabel()+'意象 · 依照片與現代街廓重建';$('places').innerHTML=places.map((p,i)=>cityOf(i)!==cityOf(index)?'':'<button class="place '+(i===index?'active':'')+'" aria-pressed="'+(i===index)+'" data-index="'+i+'"><span class="place-thumb" style="background-image:url('+ (p.thumb||(p.key==='roundhouse'?'scene-roundhouse':'archive-'+p.key))+'.jpg)"></span><span><strong>'+p.district+'</strong><small>'+p.en+'</small></span><span class="goto">'+(i===index?'●':'›')+'</span></button>').join('');$('places').querySelectorAll('button').forEach(b=>b.onclick=()=>choose(+b.dataset.index));if(landmarks[index])$('coord').textContent=landmarks[index].lat.toFixed(3)+'° N / '+landmarks[index].lon.toFixed(3)+'° E';if(isTaipei()){const r=tpActive();$('coord').textContent='約 '+(25.04775-r.z/111320).toFixed(3)+'° N / '+(121.517+r.x/100850).toFixed(3)+'° E'}$('orbitBtn').classList.toggle('on',!walking);$('walkBtn').classList.toggle('on',walking);$('orbitBtn').setAttribute('aria-pressed',String(!walking));$('walkBtn').setAttribute('aria-pressed',String(walking));$('walkControls').hidden=!walking;window.atlasWorkshop?.updateCaption()}
+$('destination').value=String(index);$('taipeiLenses').hidden=!['taipei','kaohsiung'].includes(city);$('tpWide').textContent=city==='kaohsiung'?'俯瞰站區':'站區全景';$('tpClose').textContent=city==='kaohsiung'?'近看帝冠站房':'近看本年代站房';$('old').querySelector('span').textContent=pastLabel();$('viewName').textContent=placeTitle();$('stationLenses').hidden=index!==0;$('plazaView').setAttribute('aria-pressed',String(plazaLens&&!entranceLens));$('entranceView').setAttribute('aria-pressed',String(entranceLens));$('heritageView').setAttribute('aria-pressed',String(!plazaLens&&!arcadeLens));$('arcadeView').setAttribute('aria-pressed',String(arcadeLens));$('arcadeStudy').hidden=!arcadeLens;$('viewYear').textContent=modern?'Present day':isTaipei()?tpActive().period:pastYear()+'s';$('viewEnglish').textContent=index===0&&modern&&plazaLens?'TAICHUNG STATION':place.en;$('old').setAttribute('aria-pressed',String(!modern));$('now').setAttribute('aria-pressed',String(modern));$('modelInfo').textContent=modern?'當代圖資 · 依地圖與影像重建':pastLabel()+'意象 · 依照片與現代街廓重建';$('places').innerHTML=places.map((p,i)=>cityOf(i)!==cityOf(index)?'':'<button class="place '+(i===index?'active':'')+'" aria-pressed="'+(i===index)+'" data-index="'+i+'"><span class="place-thumb" style="background-image:url('+ (p.thumb||(p.key==='roundhouse'?'scene-roundhouse':'archive-'+p.key))+'.jpg)"></span><span><strong>'+p.district+'</strong><small>'+p.en+'</small></span><span class="goto">'+(i===index?'●':'›')+'</span></button>').join('');$('places').querySelectorAll('button').forEach(b=>b.onclick=()=>choose(+b.dataset.index));if(landmarks[index])$('coord').textContent=landmarks[index].lat.toFixed(3)+'° N / '+landmarks[index].lon.toFixed(3)+'° E';if(isTaipei()){const r=tpActive();$('coord').textContent='約 '+(25.04775-r.z/111320).toFixed(3)+'° N / '+(121.517+r.x/100850).toFixed(3)+'° E'}$('orbitBtn').classList.toggle('on',!walking);$('walkBtn').classList.toggle('on',walking);$('orbitBtn').setAttribute('aria-pressed',String(!walking));$('walkBtn').setAttribute('aria-pressed',String(walking));$('walkControls').hidden=!walking;window.atlasWorkshop?.updateCaption();window.dispatchEvent(new Event('atlas-change'))}
+
 function choose(i){
- if(!places[i])return;
+ if(!places[i])return;shotNo=0;
  if(i!==0&&arcadeLens){arcadeLens=false;walking=false;camera.fov=44}
  const nextCity=cityOf(i),changed=worlds!==cachedDistricts.get(nextCity);
  if(changed&&worlds.length){window.atlasWorkshop?.resetSelection();worlds.forEach(w=>scene.remove(w))}
@@ -167,7 +170,7 @@ if(p.look)focus={x:p.look[0],y:p.look[1],z:p.look[2]};
 if(plaza)focus=entranceLens?{x:191,y:16,z:131}:{x:115,y:11.5,z:192};
 const view=plaza?(entranceLens?[102,4.2,145]:[10,4.3,145]):p.camera;
 let dx=view[0]-focus.x,dy=view[1]-focus.y,dz=view[2]-focus.z;distance=Math.hypot(dx,dy,dz);theta=Math.atan2(dx,dz);elevation=Math.asin(dy/distance);eye=index===0&&plazaLens?(entranceLens?{x:111,z:144}:{x:53,z:146}):{x:p.walk[0],z:p.walk[1]};heading=Math.atan2(focus.x-eye.x,focus.z-eye.z);pitch=.045;if(isTaipei())frameTaipei();if(i===0&&arcadeLens)setArcadePose();dirty=true;window.atlasWorkshop?.placeChanged()}
-function setEra(next){if(!ready||modern===next)return;if(isTaipei()){changeTaipei(next?5:tpPast);return}window.atlasWorkshop?.beforeEra();modern=next;if(arcadeLens)syncArcadeLink(new URL(location.href));worlds.forEach((w,i)=>w.visible=i===Number(modern));updateLabels();window.atlasWorkshop?.eraChanged();dirty=true}
+function setEra(next){if(!ready||modern===next)return;if(isTaipei()){changeTaipei(next?5:tpPast);return}window.atlasWorkshop?.beforeEra();modern=next;syncArcadeLink(new URL(location.href));worlds.forEach((w,i)=>w.visible=i===Number(modern));updateLabels();window.atlasWorkshop?.eraChanged();dirty=true}
 $('old').onclick=()=>setEra(false);$('now').onclick=()=>setEra(true);
 function setMode(value){if(walking===value)return;walking=value;held.clear();if(walking){const p=places[index];eye=index===0&&plazaLens?(entranceLens?{x:111,z:144}:{x:53,z:146}):{x:p.walk[0],z:p.walk[1]};heading=Math.atan2(focus.x-eye.x,focus.z-eye.z);pitch=.04;if(isTaipei()){const r=tpActive();eye={x:r.x+r.offset[0],z:r.z+r.offset[2]};heading=Math.atan2(r.x-eye.x,r.z-eye.z);pitch=Math.atan2(r.height-1.75,Math.hypot(r.offset[0],r.offset[2]))}if(index===0&&arcadeLens)setArcadePose()}updateLabels();dirty=true}
 $('orbitBtn').onclick=()=>setMode(false);$('walkBtn').onclick=()=>setMode(true);$('resetView').onclick=()=>choose(index);
@@ -206,7 +209,7 @@ function sky(){const cv=document.createElement('canvas');cv.width=2048;cv.height
  const tx=new THREE.TextureLoader().load('textures/taichu-sky.jpg',()=>{dirty=true});
  tx.colorSpace=THREE.SRGBColorSpace;tx.wrapS=THREE.RepeatWrapping;tx.repeat.y=.525;tx.offset.set(-.27,.475);const dome=new THREE.SphereGeometry(1450,96,48),uv=dome.attributes.uv;for(let i=0;i<uv.count;i++)uv.setY(i,Math.max(0,(uv.getY(i)-.475)/.525));const s=new THREE.Mesh(dome,new THREE.MeshBasicMaterial({map:tx,side:THREE.BackSide,fog:false}));s.name="skyBackdrop";s.userData.skies={taichung:tx,changhua:chSky};s.position.y=0;scene.add(s);scene.background=new THREE.Color('#becfca')}
 function resize(){if(!renderer)return;let w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();dirty=true}
-function render(refreshMap=true){if(!renderer||!ready)return;if(walking){camera.position.set(eye.x,1.75,eye.z);camera.lookAt(eye.x+Math.sin(heading)*Math.cos(pitch),1.75+Math.sin(pitch),eye.z+Math.cos(heading)*Math.cos(pitch))}else{const plaza=(index===0&&plazaLens||cityOf(index)!=='taichung')&&!window.atlasWorkshop?.active();camera.fov=plaza?THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(22))*Math.max(1,1.85/camera.aspect))):44;const fit=plaza?distance:distance*Math.max(1,1.32/camera.aspect);camera.position.set(focus.x+fit*Math.cos(elevation)*Math.sin(theta),focus.y+fit*Math.sin(elevation),focus.z+fit*Math.cos(elevation)*Math.cos(theta));camera.lookAt(focus.x,focus.y,focus.z)}camera.updateProjectionMatrix();let fx=walking?eye.x:focus.x,fz=walking?eye.z:focus.z;const light=window.atlasWorkshop?.light()||[-95,160,-70];sun.position.set(fx+light[0],light[1],fz+light[2]);sun.target.position.set(fx,0,fz);renderer.render(scene,camera);if(refreshMap)paintMap();dirty=false}
+function render(refreshMap=true){if(!renderer||!ready)return;const lensFov=lensMM?2*Math.atan(12/lensMM)*180/Math.PI:0;if(walking){camera.position.set(eye.x,1.75,eye.z);camera.lookAt(eye.x+Math.sin(heading)*Math.cos(pitch),1.75+Math.sin(pitch),eye.z+Math.cos(heading)*Math.cos(pitch))}else{const plaza=(index===0&&plazaLens||cityOf(index)!=='taichung')&&!window.atlasWorkshop?.active();camera.fov=plaza?THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(22))*Math.max(1,1.85/camera.aspect))):44;const fit=plaza?distance:distance*Math.max(1,1.32/camera.aspect);camera.position.set(focus.x+fit*Math.cos(elevation)*Math.sin(theta),focus.y+fit*Math.sin(elevation),focus.z+fit*Math.cos(elevation)*Math.cos(theta));camera.lookAt(focus.x,focus.y,focus.z)}if(lensFov)camera.fov=lensFov;camera.updateProjectionMatrix();let fx=walking?eye.x:focus.x,fz=walking?eye.z:focus.z;const light=window.atlasWorkshop?.light()||[-95,160,-70];sun.position.set(fx+light[0],light[1],fz+light[2]);sun.target.position.set(fx,0,fz);renderer.render(scene,camera);if(refreshMap)paintMap();dirty=false}
 let lastT=0,lastDraw=-Infinity;
 function frame(t){
   const dt=Math.min(.08,(t-lastT)/1000);lastT=t;
@@ -220,15 +223,91 @@ function frame(t){
   }
   requestAnimationFrame(frame);
 }
-function start(){try{if(!window.THREE||!window.GEODATA||!window.makeStation)throw Error('模型檔案未載入');renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;stage.append(renderer.domElement);scene=new THREE.Scene();scene.fog=new THREE.FogExp2('#d5dfe2',.0019);camera=new THREE.PerspectiveCamera(44,1,.3,2600);sky();scene.add(new THREE.HemisphereLight('#e7f2fc','#a39e8f',1.75));sun=new THREE.DirectionalLight('#fff1de',2.05);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-110,right:110,top:110,bottom:-110,near:1,far:380});sun.shadow.camera.updateProjectionMatrix();sun.shadow.normalBias=.035;sun.shadow.bias=-.00025;scene.add(sun,sun.target);ready=true;const query=new URLSearchParams(location.search),requested=query.get('place');if(requested==='taipei'&&/^[1-5]$/.test(query.get('generation'))){const n=Number(query.get('generation'));modern=n===5;if(!modern)tpPast=n}if(requested==='station'&&query.get('view')==='arcade'){arcadeLens=true;plazaLens=false;walking=true;modern=query.get('era')==='now'}choose(Math.max(0,places.findIndex(p=>p.key===requested)));resize();render();$('loading').hidden=true;new ResizeObserver(resize).observe(stage);new IntersectionObserver(([e])=>{stageVisible=e.isIntersecting;if(stageVisible)dirty=true}).observe(stage);requestAnimationFrame(frame)}catch(e){console.error(e);$('loading').textContent='無法開啟立體街景。請使用支援 WebGL 的瀏覽器並開啟硬體加速。仍可在「時空手記」欣賞影像。';$('shutter').disabled=true;paintMap()}}
+function start(){try{if(!window.THREE||!window.GEODATA||!window.makeStation)throw Error('模型檔案未載入');renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;stage.append(renderer.domElement);scene=new THREE.Scene();scene.fog=new THREE.FogExp2('#d5dfe2',.0019);camera=new THREE.PerspectiveCamera(44,1,.3,2600);sky();scene.add(new THREE.HemisphereLight('#e7f2fc','#a39e8f',1.75));sun=new THREE.DirectionalLight('#fff1de',2.05);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-110,right:110,top:110,bottom:-110,near:1,far:380});sun.shadow.camera.updateProjectionMatrix();sun.shadow.normalBias=.035;sun.shadow.bias=-.00025;scene.add(sun,sun.target);ready=true;const query=new URLSearchParams(location.search),requested=query.get('place');if(requested==='taipei'&&/^[1-5]$/.test(query.get('generation'))){const n=Number(query.get('generation'));modern=n===5;if(!modern)tpPast=n}if(['past','now'].includes(query.get('era'))&&requested!=='taipei'&&query.get('view')!=='arcade')modern=query.get('era')==='now';if(requested==='station'&&query.get('view')==='arcade'){arcadeLens=true;plazaLens=false;walking=true;modern=query.get('era')==='now'}choose(Math.max(0,places.findIndex(p=>p.key===requested)));restoreShared(query);resize();render();$('loading').hidden=true;new ResizeObserver(resize).observe(stage);new IntersectionObserver(([e])=>{stageVisible=e.isIntersecting;if(stageVisible)dirty=true}).observe(stage);requestAnimationFrame(frame)}catch(e){console.error(e);$('loading').textContent='無法開啟立體街景。請使用支援 WebGL 的瀏覽器並開啟硬體加速。仍可在「時空手記」欣賞影像。';$('shutter').disabled=true;paintMap()}}
 $('shutter').onclick=()=>{if(!ready)return;window.atlasWorkshop?.beforeEra();render();let src=renderer.domElement,out=document.createElement('canvas'),factor=Math.min(1,1500/src.width);out.width=Math.round(src.width*factor);const photoH=Math.round(src.height*factor),bar=Math.max(44,Math.round(out.width*.037));out.height=photoH+bar;const c=out.getContext('2d');c.drawImage(src,0,0,out.width,photoH);c.fillStyle='#f4f0e3';c.fillRect(0,photoH,out.width,bar);c.fillStyle='#2a3c31';let size=Math.max(11,Math.round(bar*.33)),title=(window.atlasWorkshop?.photoName()||placeTitle())+' · '+(modern?'當代':pastLabel()+'意象')+(window.atlasWorkshop?.hasEdits()?' · 自訂':'');c.font='bold '+size+'px serif';c.fillText(title,12,photoH+bar*.48);c.font=Math.max(8,Math.round(bar*.23))+'px sans-serif';c.fillText('今昔街影   /   © OpenStreetMap contributors',12,photoH+bar*.82);
  let shot={id:Date.now(),title,image:out.toDataURL('image/jpeg',.86)};photos.unshift(shot);let saved=true;try{localStorage.setItem('street-atlas-photos-v1',JSON.stringify(photos))}catch{saved=false} $('count').textContent=photos.length;const f=document.querySelector('.flash');f.classList.remove('fire');void f.offsetWidth;f.classList.add('fire');toast(saved?'已收藏於「我的攝影」':'本機空間已滿，請在「我的攝影」下載此張照片')};
 const tainanOption=document.createElement('optgroup');tainanOption.label='臺南';tainanOption.append(new Option('臺南車站與站前廣場','tainan'));$('destination').append(tainanOption);
+[...$('destination').querySelectorAll('optgroup')].find(g=>g.label==='臺北')?.append(new Option('圓山・劍潭','yuanshan'));
 $('tainanCity').onclick=()=>location.assign('?place=tainan');
-$('destination').onchange=e=>e.target.value==='tainan'?$('tainanCity').click():browsePlace(Number(e.target.value));
-if(new URLSearchParams(location.search).get('place')!=='tainan'){updateLabels();requestAnimationFrame(()=>setTimeout(start,0))}
+$('destination').onchange=e=>/^\d+$/.test(e.target.value)?browsePlace(Number(e.target.value)):location.assign('?place='+e.target.value);
+const MODULE_PLACES=['tainan','yuanshan'];
+if(!MODULE_PLACES.includes(new URLSearchParams(location.search).get('place'))){updateLabels();requestAnimationFrame(()=>setTimeout(start,0))}
 window.saveTainanPhoto=(canvas,title)=>{
  photos.unshift({id:Date.now(),title,image:canvas.toDataURL('image/jpeg',.86)});
  try{localStorage.setItem('street-atlas-photos-v1',JSON.stringify(photos));toast('已收藏於「我的攝影」')}catch{toast('本機空間已滿，可在「我的攝影」下載')}
  $('count').textContent=photos.length;
+};
+
+// ── 共用場景介面（src/shared/legacy-bridge.js）需要的狀態與操作 ──
+// 鏡位：每個地點都有「起始」與「鳥瞰／人眼」，再加上地點特有的鏡位。網址參數 shot、mm、cam 可還原。
+let lensMM=0,shotNo=0;
+const SHOT_SETS={
+ station:[['站前廣場','plaza'],['高架站入口','entrance'],['舊站近看','heritage'],['1930 年代騎樓（人眼）','arcade'],['鳥瞰','aerial']],
+ taipei:[['近看本年代站房','start'],['站區全景','wide'],['鳥瞰','aerial'],['人眼高度','eye']],
+ kaohsiung:[['站前廣場','start'],['近看帝冠站房','close'],['俯瞰站區','wide'],['人眼高度','eye']],
+ default:[['起始鏡位','start'],['鳥瞰','aerial'],['人眼高度','eye']]
+};
+const shotsFor=()=>SHOT_SETS[places[index].key]||SHOT_SETS.default;
+function applyShot(n){
+ if(!ready)return;const list=shotsFor(),kind=(list[n]||list[0])[1];
+ if(['plaza','entrance','heritage'].includes(kind))$(kind+'View').click();
+ else if(kind==='arcade')enterArcade();
+ else if(kind==='wide')$('tpWide').click();
+ else if(kind==='close')$('tpClose').click();
+ else{if(arcadeLens){arcadeLens=false;camera.fov=44}if(index===0){plazaLens=true;entranceLens=false}if(walking)setMode(false);choose(index);
+  if(kind==='aerial'){distance=Math.min(425,Math.max(140,distance*2.6));elevation=.8}
+  if(kind==='eye')setMode(true)}
+ shotNo=list[n]?n:0;dirty=true;updateLabels();
+}
+function eraCapture(m){
+ const keep=modern;modern=m;worlds.forEach((w,i)=>w.visible=i===Number(m));if(isTaipei())showTaipeiStation();
+ render(false);const src=renderer.domElement,c=document.createElement('canvas');c.width=src.width;c.height=src.height;c.getContext('2d').drawImage(src,0,0);
+ modern=keep;worlds.forEach((w,i)=>w.visible=i===Number(keep));if(isTaipei())showTaipeiStation();render(false);return c;
+}
+function restoreShared(q){
+ const n=Number(q.get('shot'));if(q.get('view')!=='arcade'&&q.has('shot')&&Number.isInteger(n)&&n>0&&n<shotsFor().length)applyShot(n);
+ const mm=Number(q.get('mm'));if(mm>=14&&mm<=135)lensMM=mm;
+ const cam=(q.get('cam')||'').split(',').map(Number);
+ if(cam.length===6&&cam.every(Number.isFinite)){
+  const [px,py,pz,tx,ty,tz]=cam;
+  if(q.get('walk')==='1'){if(!walking)setMode(true);eye={x:px,z:pz};heading=Math.atan2(tx-px,tz-pz);pitch=Math.atan2(ty-py,Math.hypot(tx-px,tz-pz))}
+  else{if(walking)setMode(false);focus={x:tx,y:ty,z:tz};const dx=px-tx,dy=py-ty,dz=pz-tz;distance=Math.hypot(dx,dy,dz)||60;theta=Math.atan2(dx,dz);elevation=Math.asin(dy/distance)}
+ }
+ dirty=true;window.streetAtlas.restored=true;updateLabels();
+}
+window.streetAtlas={
+ get ready(){return ready},
+ get place(){return places[index]},
+ get city(){return cityOf(index)},
+ get isTaipei(){return isTaipei()},
+ get modern(){return modern},
+ get tpPast(){return tpPast},
+ get walking(){return walking},
+ get shot(){return index===0&&arcadeLens?3:shotNo},
+ get mm(){return lensMM||Math.max(16,Math.min(105,Math.round(12/Math.tan((camera?camera.fov:44)*Math.PI/360))))},
+ pastYear,
+ shots:()=>shotsFor().map(([name])=>({name})),
+ setShot:applyShot,
+ setPast(){setEra(false)},setNow(){setEra(true)},
+ setGeneration(n){changeTaipei(n)},
+ toggleWalk(){setMode(!walking);return walking},
+ setFocal(mm){lensMM=mm;dirty=true},
+ zoom(f){zoom(f<1?-1:1)},
+ compare(){
+  const a=eraCapture(false),b=eraCapture(true),out=document.createElement('canvas');out.width=a.width*2+12;out.height=a.height;
+  const c=out.getContext('2d');c.fillStyle='#f4f0e3';c.fillRect(0,0,out.width,out.height);c.drawImage(a,0,0);c.drawImage(b,a.width+12,0);
+  return {canvas:out,title:pastLabel()+' ↔ 當代 · '+places[index].district};
+ },
+ snapshot(){render(false);const src=renderer.domElement,c=document.createElement('canvas');c.width=src.width;c.height=src.height;c.getContext('2d').drawImage(src,0,0);return c},
+ shareURL(){
+  const u=new URL(location.href);u.searchParams.set('place',places[index].key);
+  if(isTaipei())u.searchParams.set('generation',modern?5:tpPast);else u.searchParams.set('era',modern?'now':'past');
+  if(index===0&&arcadeLens)u.searchParams.set('view','arcade');else u.searchParams.delete('view');
+  if(shotNo&&!arcadeLens)u.searchParams.set('shot',shotNo);else u.searchParams.delete('shot');
+  if(lensMM)u.searchParams.set('mm',lensMM);else u.searchParams.delete('mm');
+  const p=camera.position,t=walking?{x:eye.x+Math.sin(heading)*5,y:1.75+Math.sin(pitch)*5,z:eye.z+Math.cos(heading)*5}:focus;
+  u.searchParams.set('cam',[p.x,p.y,p.z,t.x,t.y,t.z].map(v=>v.toFixed(1)).join(','));
+  if(walking)u.searchParams.set('walk','1');else u.searchParams.delete('walk');
+  return u.href;
+ }
 };

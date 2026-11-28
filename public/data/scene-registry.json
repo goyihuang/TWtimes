@@ -102,7 +102,7 @@
       "summary": "臺灣神社與兩代明治橋、戰後臺灣大飯店，到 1973 年宮殿式圓山大飯店；基隆河與劍潭山的四個時代，含時刻、天氣與膠彩濾鏡。",
       "sources": [{ "label": "Wikipedia：Grand Hotel (Taipei)", "url": "https://en.wikipedia.org/wiki/Taipei_Grand_Hotel" }],
       "license": "程序化重建，未內嵌館藏影像",
-      "entry": "yuanshan.html", "status": "live", "confidence": "B"
+      "entry": "./?place=yuanshan", "status": "live", "confidence": "B"
     },
     {
       "id": "tainan-station", "name": "臺南驛前・百年府城門戶", "nameEn": "Tainan Station", "aliases": ["臺南車站", "台南車站", "臺南驛", "台南火車站", "鐵道飯店"],

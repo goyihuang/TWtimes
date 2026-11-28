@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import './yuanshan.css';
+import './tags.css';
 import { G, LAMPS } from './materials.js';
 import { RIVER, SANDO, shrineLocal, mulberry } from './geo.js';
 import { buildGrid, eraCanvases, buildTerrain, hAt } from './terrain.js';
@@ -18,7 +18,9 @@ const params = new URLSearchParams(location.search);
 const mobile = matchMedia('(pointer: coarse)').matches;
 const quality = params.get('q') || (mobile ? 'low' : 'high');
 const tick = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
-const status = async (msg, pct) => { $('loadMsg').textContent = msg; $('loadBar').style.width = pct + '%'; await tick(); };
+let ui = {};
+const status = async (msg, pct) => { ui.status?.(`${msg}（${pct}%）`); const l = $('loading'); if (l && pct < 100) l.textContent = '圓山・劍潭　' + msg; await tick(); };
+const size = c => [c.parentElement?.clientWidth || innerWidth, c.parentElement?.clientHeight || innerHeight];
 
 // ---------- 光暈：燈籠頭的光點＋地面光池 ----------
 function buildGlows(lights) {
@@ -47,8 +49,9 @@ function buildGlows(lights) {
 }
 
 class App {
+  constructor(canvas) { this.canvas = canvas; }
   async init() {
-    const canvas = $('scene');
+    const canvas = this.canvas;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
     this.pr = Math.min(devicePixelRatio || 1, quality === 'low' ? 1 : 1.5);
     this.renderer.setPixelRatio(this.pr);
@@ -98,7 +101,6 @@ class App {
     this.atmo = new Atmosphere(this.renderer, this.scene, quality);
     this.post = new Post(this.renderer, this.scene, this.camera, quality);
     this.era = 0; this.eraFrom = 0; this.eraT = 1; this.ghostOn = true; this.labelsOn = true; this.autoMood = true;
-    if (mobile || innerWidth < 760) document.body.classList.remove('panel-open');
     this.buildUI();
     const e0 = Math.min(3, Math.max(0, (+params.get('era') || 2) - 1));
     this.setEra(e0, true);
@@ -106,20 +108,21 @@ class App {
     if (params.has('w') && WEATHER[params.get('w')]) this.setWeather(params.get('w'));
     this.goShot(Math.min(SHOTS.length - 1, Math.max(0, (+params.get('shot') || 1) - 1)), true);
     if (params.get('paint') === '1') this.togglePaint(true);
-    if (params.get('ui') === '0') document.body.classList.add('clean');
-    this.resize(); addEventListener('resize', () => this.resize());
+    const cam = (params.get('cam') || '').split(',').map(Number);
+    if (cam.length === 6 && cam.every(Number.isFinite)) { this.camera.position.set(cam[0], cam[1], cam[2]); this.controls.target.set(cam[3], cam[4], cam[5]); this.controls.update(); }
+    if (+params.get('mm') >= 14) this.setFocal(+params.get('mm'));
+    this.resize(); new ResizeObserver(() => this.resize()).observe(canvas.parentElement || canvas);
     await status('完成', 100);
     // 預先編譯並暖機
     this.renderer.compile(this.scene, this.camera);
     this.clock = new THREE.Clock(); this.t = 0; this.frames = 0; this.slow = 0;
     if (params.get('test') === '1') { this.step = (n = 1, dt = 0.1) => { for (let i = 0; i < n; i++) { this.clock.getDelta = () => dt; this.frame(); } return this.frames; }; }
     else this.renderer.setAnimationLoop(() => this.frame());
-    setTimeout(() => $('loader').classList.add('done'), 300);
     window.__yuanshan = this;
   }
 
   resize() {
-    const w = innerWidth, h = innerHeight; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
+    const [w, h] = size(this.canvas); this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
     this.post.setSize(w, h, this.renderer.getPixelRatio());
   }
 
@@ -138,70 +141,51 @@ class App {
     this.water.material.uniforms.waterColor.value.set(['#3d5548', '#2f4c47', '#38504a', '#2a3f44'][i]);
     this.water.material.uniforms.uSilt.value.set(['#6d6a4c', '#5d6b4f', '#5f5f48', '#4d5a52'][i]);
     // 介面
-    document.querySelectorAll('.era-node').forEach((b, k) => { b.classList.toggle('on', k === i); b.setAttribute('aria-pressed', String(k === i)); });
-    $('eraTitle').textContent = e.title; $('eraText').textContent = e.text; $('eraRange').textContent = e.range; $('eraLook').textContent = e.look;
-    const card = $('eraCard'); card.classList.remove('show'); void card.offsetWidth; card.classList.add('show');
-    document.body.dataset.era = e.id;
+    ui.onEra?.(i);
     this.updateLabels(true);
     if (!instant) this.flash = 1;
-    const url = new URL(location.href); url.searchParams.set('era', i + 1); history.replaceState(null, '', url);
+    const url = new URL(location.href); url.searchParams.set('place', 'yuanshan'); url.searchParams.set('era', i + 1); history.replaceState(null, '', url);
   }
 
   setHour(h) { this.atmo.hour = ((h % 24) + 24) % 24; this.hourTween = null; this.syncTime(); }
   tweenHour(h) { let from = this.atmo.hour, to = h; if (Math.abs(to - from) > 12) to += to < from ? 24 : -24; this.hourTween = { from, to, t: 0 }; }
   syncTime() {
-    const h = this.atmo.hour; $('hour').value = h.toFixed(2);
+    const h = this.atmo.hour; ui.onHour?.(h);
     const hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
     const names = [[5, '夜半'], [6.5, '破曉'], [9, '晨光'], [15, '晝'], [17.6, '午後斜陽'], [19, '黃昏'], [24, '夜']];
-    $('hourVal').textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}　${names.find(n => h < n[0])[1]}`;
+    this.hourText = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}　${names.find(n => h < n[0])[1]}`;
   }
-  setWeather(w) { this.atmo.setWeather(w); document.querySelectorAll('[data-weather]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.weather === w))); this.water.material.uniforms.uRain.value = w === 'rain' ? 1 : 0; }
+  setWeather(w) { this.atmo.setWeather(w); ui.onWeather?.(w); this.water.material.uniforms.uRain.value = w === 'rain' ? 1 : 0; }
 
   goShot(i, instant = false) {
     const s = SHOTS[i]; this.shot = i;
     const cam = new THREE.Vector3(...s.cam), tgt = new THREE.Vector3(...s.tgt);
-    document.querySelectorAll('[data-shot]').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.shot === i)));
+    ui.onShot?.(i);
     if (instant) { this.camera.position.copy(cam); this.controls.target.copy(tgt); this.camera.fov = s.fov; this.camera.updateProjectionMatrix(); this.controls.update(); return; }
     this.fly = { p0: this.camera.position.clone(), t0: this.controls.target.clone(), f0: this.camera.fov, p1: cam, t1: tgt, f1: s.fov, k: 0, dur: 3.2 };
   }
 
-  togglePaint(on) { this.post.kuwa.enabled = on; $('paint').setAttribute('aria-pressed', String(on)); }
+  togglePaint(on) { this.post.kuwa.enabled = on; ui.onToggle?.(); }
+  setFocal(mm) { this.fly = null; this.camera.fov = 2 * Math.atan(12 / mm) * 180 / Math.PI; this.camera.updateProjectionMatrix(); }
 
   // ---------- 介面 ----------
   buildUI() {
-    const tl = $('timeline');
-    tl.innerHTML = ERAS.map((e, i) => `<button class="era-node" data-era="${i}" aria-pressed="false"><span class="dot"></span><b>${e.year}</b><small>${e.short}</small></button>`).join('');
-    tl.querySelectorAll('.era-node').forEach(b => b.onclick = () => this.setEra(+b.dataset.era));
-    $('shots').innerHTML = SHOTS.map((s, i) => `<button data-shot="${i}" title="${s.desc}" aria-pressed="false">${s.name}</button>`).join('');
-    $('shots').querySelectorAll('button').forEach(b => b.onclick = () => this.goShot(+b.dataset.shot));
-    $('weather').innerHTML = Object.entries(WEATHER).map(([k, w]) => `<button data-weather="${k}" aria-pressed="false">${w.name}</button>`).join('');
-    $('weather').querySelectorAll('button').forEach(b => b.onclick = () => this.setWeather(b.dataset.weather));
-    $('hour').oninput = e => { this.setHour(+e.target.value); };
-    $('paint').onclick = () => this.togglePaint(!this.post.kuwa.enabled);
-    $('ghost').onclick = () => { this.ghostOn = !this.ghostOn; $('ghost').setAttribute('aria-pressed', String(this.ghostOn)); };
-    $('labels').onclick = () => { this.labelsOn = !this.labelsOn; $('labels').setAttribute('aria-pressed', String(this.labelsOn)); this.updateLabels(true); };
-    $('tour').onclick = () => { this.controls.autoRotate = !this.controls.autoRotate; $('tour').setAttribute('aria-pressed', String(this.controls.autoRotate)); };
-    $('mood').onclick = () => { this.autoMood = !this.autoMood; $('mood').setAttribute('aria-pressed', String(this.autoMood)); if (this.autoMood) { const e = ERAS[this.era]; this.tweenHour(e.mood.hour); this.setWeather(e.mood.weather); } };
-    $('photo').onclick = () => this.photo();
-    $('hide').onclick = () => document.body.classList.toggle('clean');
-    $('panelToggle').onclick = () => document.body.classList.toggle('panel-open');
     // 標註
-    this.labelEls = LABELS.map(L => { const d = document.createElement('div'); d.className = 'tag'; d.innerHTML = '<span></span>'; $('tags').append(d); return { L, d, v: new THREE.Vector3(...L.pos) }; });
+    this.labelEls = LABELS.map(L => { const d = document.createElement('div'); d.className = 'tag'; d.innerHTML = '<span></span>'; (this.tags || $('tags')).append(d); return { L, d, v: new THREE.Vector3(...L.pos) }; });
     addEventListener('keydown', e => {
-      if (e.target.tagName === 'INPUT') return;
+      if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
       if (e.key >= '1' && e.key <= '4') this.setEra(+e.key - 1);
       if (e.key === 'ArrowRight') this.setEra(Math.min(3, this.era + 1));
       if (e.key === 'ArrowLeft') this.setEra(Math.max(0, this.era - 1));
-      if (e.key === 'p' || e.key === 'P') this.photo();
-      if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('clean');
+      if (e.key === 'p' || e.key === 'P') window.saveScenePhoto?.(this.photo(), '圓山・劍潭 ' + ERAS[this.era].year);
       if (e.key === 'g' || e.key === 'G') this.togglePaint(!this.post.kuwa.enabled);
     });
-    this.controls.addEventListener('start', () => { this.fly = null; $('hint').classList.add('gone'); });
+    this.controls.addEventListener('start', () => { this.fly = null; });
   }
 
   updateLabels(force) {
     if (!this.labelEls) return;
-    const w = innerWidth, h = innerHeight; const v = new THREE.Vector3();
+    const [w, h] = size(this.canvas); const v = new THREE.Vector3();
     for (const o of this.labelEls) {
       const txt = o.L.text[this.era]; if (force) o.d.firstChild.textContent = txt;
       v.copy(o.v).project(this.camera);
@@ -220,9 +204,21 @@ class App {
     const e = ERAS[this.era]; c.fillStyle = '#2b2a26'; c.font = `600 ${Math.round(bar * 0.36)}px "Noto Serif TC", serif`;
     c.fillText(`圓山・劍潭　${e.range}　${e.name}`, bar * 0.4, src.height + bar * 0.5);
     c.font = `${Math.round(bar * 0.24)}px sans-serif`; c.fillStyle = '#6b665b';
-    c.fillText(`${$('hourVal').textContent}　${WEATHER[this.atmo.weather].name}　今昔街影 · 依史料與舊照重建的示意場景`, bar * 0.4, src.height + bar * 0.82);
-    const a = document.createElement('a'); a.download = `圓山-${e.year}-${Date.now()}.png`; a.href = out.toDataURL('image/png'); a.click();
+    c.fillText(`${this.hourText}　${WEATHER[this.atmo.weather].name}　今昔街影 · 依史料與舊照重建的示意場景`, bar * 0.4, src.height + bar * 0.82);
     this.flash = 1;
+    return out;
+  }
+
+  // 同一鏡頭、同一時刻天氣，只換時代（今昔並排用）
+  stillOf(i) {
+    const U = this.terrain.mat.userData.U, texs = this.terrain.mat.userData.texs;
+    const keep = { era: this.era, eraFrom: this.eraFrom, eraT: this.eraT, tA: U.tA.value, tB: U.tB.value, mix: U.uMix.value, urban: U.uUrban.value, delta: this.clock.getDelta };
+    this.era = this.eraFrom = i; this.eraT = 1; U.tA.value = U.tB.value = texs[i]; U.uMix.value = 1; U.uUrban.value = [0.05, 0.25, 0.55, 1][i];
+    this.clock.getDelta = () => 0.0001; this.frame();
+    const c = document.createElement('canvas'); c.width = this.canvas.width; c.height = this.canvas.height; c.getContext('2d').drawImage(this.canvas, 0, 0);
+    Object.assign(this, { era: keep.era, eraFrom: keep.eraFrom, eraT: keep.eraT }); U.tA.value = keep.tA; U.tB.value = keep.tB; U.uMix.value = keep.mix; U.uUrban.value = keep.urban;
+    this.frame(); this.clock.getDelta = keep.delta;
+    return c;
   }
 
   frame() {
@@ -281,5 +277,42 @@ class App {
   }
 }
 
-const app = new App();
-app.init().catch(err => { console.error(err); $('loadMsg').textContent = '無法建立立體場景：' + err.message + '。請使用支援 WebGL 2 的瀏覽器並開啟硬體加速。'; });
+// 在首頁共用框架裡建立圓山場景，回傳共用場景 API（docs/scene-contract.md）
+export async function createYuanshan(canvas, callbacks = {}) {
+  ui = callbacks;
+  const app = new App(canvas);
+  app.tags = document.createElement('div'); app.tags.id = 'tags'; app.tags.setAttribute('aria-hidden', 'true'); canvas.parentElement.append(app.tags);
+  await app.init();
+  const state = {
+    get era() { return app.era; }, get shot() { return app.shot ?? 0; }, get hour() { return app.atmo.hour; }, get weather() { return app.atmo.weather; },
+    get mm() { return Math.round(12 / Math.tan(app.camera.fov * Math.PI / 360)); }, walk: false,
+  };
+  const eras = ERAS.map(e => ({ id: e.id, year: e.year, name: e.short, en: e.name, story: `${e.title}。${e.text}`, evidence: e.evidence || [] }));
+  return {
+    app, eras, shots: SHOTS, state,
+    weathers: Object.fromEntries(Object.entries(WEATHER).map(([k, w]) => [k, w.name])),
+    setEra: i => app.setEra(i), setShot: i => app.goShot(i), setFocal: mm => app.setFocal(mm),
+    setHour: h => app.setHour(h), setWeather: w => app.setWeather(w),
+    zoom(f) { const c = app.controls; app.camera.position.sub(c.target).multiplyScalar(f).add(c.target); c.update(); },
+    snapshot: () => app.photo(),
+    compare() {
+      const cur = app.era, other = cur === 3 ? 1 : 3, a = app.stillOf(cur), b = app.stillOf(other);
+      const out = document.createElement('canvas'); out.width = a.width * 2 + 12; out.height = a.height; const g = out.getContext('2d');
+      g.fillStyle = '#f4f0e3'; g.fillRect(0, 0, out.width, out.height); g.drawImage(a, 0, 0); g.drawImage(b, a.width + 12, 0);
+      return { canvas: out, title: `${ERAS[cur].year} ↔ ${ERAS[other].year} · 圓山・劍潭` };
+    },
+    shareURL() {
+      const u = new URL(location.href), p = app.camera.position, t = app.controls.target;
+      u.searchParams.set('place', 'yuanshan'); u.searchParams.set('era', app.era + 1); u.searchParams.set('t', app.atmo.hour.toFixed(2)); u.searchParams.set('w', app.atmo.weather);
+      u.searchParams.set('mm', state.mm); u.searchParams.set('cam', [p.x, p.y, p.z, t.x, t.y, t.z].map(v => v.toFixed(1)).join(','));
+      return u.href;
+    },
+    toggles: [
+      { id: 'mood', label: '時代氛圍', title: '切換時代時套用該時代的時刻與天氣', on: () => app.autoMood, set: v => { app.autoMood = v; } },
+      { id: 'paint', label: '膠彩筆觸', title: '膠彩／水彩筆觸（G）', on: () => app.post.kuwa.enabled, set: v => app.togglePaint(v) },
+      { id: 'ghost', label: '舊橋殘影', title: '今日時期顯示已拆除的中山橋位置', on: () => app.ghostOn, set: v => { app.ghostOn = v; } },
+      { id: 'labels', label: '地名標註', on: () => app.labelsOn, set: v => { app.labelsOn = v; app.updateLabels(true); } },
+      { id: 'tour', label: '緩緩環繞', on: () => app.controls.autoRotate, set: v => { app.controls.autoRotate = v; } },
+    ],
+  };
+}
