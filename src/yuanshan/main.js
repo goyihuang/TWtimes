@@ -12,6 +12,7 @@ import { buildMeiji1, buildMeiji2, ghostOf, buildModernRoads, buildRailBridge } 
 import { Atmosphere, WEATHER } from './atmosphere.js';
 import { Post } from './post.js';
 import { ERAS, SHOTS, LABELS } from './eras.js';
+import { TRANSITION } from '../shared/era-grow.js';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -128,6 +129,7 @@ class App {
 
   // ---------- 時代 ----------
   setEra(i, instant = false) {
+    if (TRANSITION.mode === 'cut') instant = true;
     if (i === this.era && !instant) return;
     this.eraFrom = instant ? i : this.era; this.era = i; this.eraT = instant ? 1 : 0;
     const U = this.terrain.mat.userData.U, texs = this.terrain.mat.userData.texs;
@@ -226,7 +228,7 @@ class App {
     // 自動降解析度
     this.frames++; if (dt > 0.045) this.slow++; if (this.frames % 90 === 0) { if (this.slow > 60 && this.pr > 0.7) { this.pr = Math.max(0.7, this.pr - 0.2); this.renderer.setPixelRatio(this.pr); this.resize(); } this.slow = 0; }
     // 時代轉場
-    if (this.eraT < 1) this.eraT = Math.min(1, this.eraT + dt / 2.6);
+    if (this.eraT < 1) this.eraT = Math.min(1, this.eraT + dt / TRANSITION.seconds);
     const k = this.eraT, ease = k * k * (3 - 2 * k);
     const ev = [0, 0, 0, 0]; ev[this.era] = ease; if (this.eraFrom !== this.era) ev[this.eraFrom] = Math.max(ev[this.eraFrom], 1 - ease); else ev[this.era] = 1;
     G.uEra.value.set(...ev);
@@ -289,7 +291,7 @@ export async function createYuanshan(canvas, callbacks = {}) {
   };
   const eras = ERAS.map(e => ({ id: e.id, year: e.year, name: e.short, en: e.name, story: `${e.title}。${e.text}`, evidence: e.evidence || [] }));
   return {
-    app, eras, shots: SHOTS, state,
+    app, eras, shots: SHOTS, state, transitions: ['grow', 'cut'], controls: app.controls,
     weathers: Object.fromEntries(Object.entries(WEATHER).map(([k, w]) => [k, w.name])),
     setEra: i => app.setEra(i), setShot: i => app.goShot(i), setFocal: mm => app.setFocal(mm),
     setHour: h => app.setHour(h), setWeather: w => app.setWeather(w),

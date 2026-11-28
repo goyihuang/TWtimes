@@ -2,6 +2,10 @@
 // 引擎仍是 public/app.js；這裡只把它的狀態轉成與臺南相同的場景 API（docs/scene-contract.md）。
 import { mountScenePanel } from './scene-panel.js';
 import { CATALOG, placeButton } from './platform-frame.js';
+import { createEraGrow } from './era-grow.js';
+
+// 年代轉場「建物長出來」：app.js 用的是舊版 three（public/three.min.js），把同一套轉場用它的命名空間建立
+if (window.THREE) window.eraGrow = createEraGrow(window.THREE);
 
 const SA = () => window.streetAtlas;
 
@@ -47,6 +51,9 @@ const panel = mountScenePanel({ title: '', en: '' });
 let boundKey = null;
 const api = {
   keepCaption: true, frameButtons: false,
+  transitions: ['grow', 'cut'], get grow() { return window.eraGrow; }, THREE: window.THREE,
+  get scene() { return SA().scene; }, exportRoot: () => SA().currentWorld, redraw: () => SA().redraw(),
+  get spin() { return SA().spin; }, setSpin: v => SA().setSpin(v),
   get state() { const s = SA(); return { era: s.isTaipei ? (s.modern ? 4 : s.tpPast - 1) : (s.modern ? 1 : 0), shot: s.shot, mm: s.mm, walk: s.walking, hour: s.hour, weather: s.weather }; },
   weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '霧' },
   setHour: h => SA().setHour(h), setWeather: w => SA().setWeather(w),

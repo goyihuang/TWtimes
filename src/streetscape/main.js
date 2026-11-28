@@ -4,6 +4,7 @@ import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
+import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
 import { cloudTex, rng, signTexture } from '../tainan/kit.js';
 import { loadStreet } from './osm.js';
 import { buildStreet } from './build.js';
@@ -61,10 +62,15 @@ export async function createStreetscape(canvas, ui = {}, place) {
   const data = await loadStreet({ id: place.id, lat: place.lat, lng: place.lng, radius: 500, status });
   let street = null;
   const pin = new T.Group(); scene.add(pin);
-  function rebuild() {
-    if (street) { scene.remove(street.root); street.dispose(); }
+  // 重建街廓；animate 時舊街廓沉下、新街廓從地面長出（共用年代轉場，src/shared/era-grow.js）
+  const grow = createEraGrow(T);
+  function rebuild(animate = false) {
+    grow.finish();
+    const old = street;
+    if (old && !(animate && TRANSITION.mode === 'grow')) { scene.remove(old.root); old.dispose(); }
     street = buildStreet(data, { seed: state.seed, heightScale: state.heightScale, roadScale: state.roadScale, radius: state.radius, clay: state.clay, trees: state.trees, props: state.props });
     scene.add(street.root);
+    if (animate && TRANSITION.mode === 'grow') grow.start(old?.root || null, street.root, state.walk ? camera.position : controls.target, { onDone: () => { if (old) { scene.remove(old.root); old.dispose(); } } });
     const R = state.radius; Object.assign(sun.shadow.camera, { left: -R, right: R, top: R, bottom: -R, near: 10, far: R * 4 }); sun.shadow.camera.updateProjectionMatrix();
     climate(); updateEvidence();
   }
@@ -157,6 +163,7 @@ export async function createStreetscape(canvas, ui = {}, place) {
     if (state.walk) walkStep(dt); else controls.update();
     if (pin.userData.sp) { const h = clamp(camera.position.distanceTo(controls.target) * 0.12, 12, 70); pin.userData.sp.position.y = h + 3; pin.userData.stem.scale.y = h; pin.userData.stem.position.y = h / 2; pin.visible = !state.walk && !document.body.classList.contains('clean-view'); }
     if (rain.visible) { const p = rainGeo.attributes.position.array; for (let i = 0; i < p.length; i += 6) { p[i + 1] -= dt * 26; p[i + 4] -= dt * 26; if (p[i + 1] < 0) { p[i + 1] += 60; p[i + 4] += 60; } } rainGeo.attributes.position.needsUpdate = true; rain.position.set(camera.position.x, 0, camera.position.z); }
+    grow.update(dt);
     cloudTex.offset.x += dt * 0.0015; post.grade.uniforms.uTime.value = time;
     post.composer.render(dt);
   }
@@ -181,18 +188,18 @@ export async function createStreetscape(canvas, ui = {}, place) {
     u.searchParams.set('cam', [p.x, p.y, p.z, t.x, t.y, t.z].map(v => v.toFixed(1)).join(',')); if (state.walk) u.searchParams.set('walk', '1'); else u.searchParams.delete('walk'); u.searchParams.delete('shot');
     return u.href;
   }
-  function snapshot() { post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
+  function snapshot() { grow.finish(); post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
   async function exportGLB() {
     status('匯出 GLB 中…');
     const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
-    const buf = await new GLTFExporter().parseAsync(street.root, { binary: true, onlyVisible: true });
+    grow.finish(); const buf = await new GLTFExporter().parseAsync(street.root, { binary: true, onlyVisible: true });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' })); a.download = `${place.id || 'streetscape'}-osm-${state.radius}m.glb`; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     status('已匯出 GLB（街廓幾何，立面窗格為即時著色，不含在模型內）。資料 © OpenStreetMap contributors，發表時須標示。');
   }
 
-  // ── 初始 ──
-  rebuild();
+  // ── 初始：街廓從地面長出（分享網址或直接切換設定時不播）──
+  rebuild(!q.has('cam') && TRANSITION.mode === 'grow');
   const shotQ = Number(q.get('shot')); setShot(Number.isInteger(shotQ) && shotQ >= 0 && shotQ < shots.length ? shotQ : 0);
   const cam = (q.get('cam') || '').split(',').map(Number);
   if (cam.length === 6 && cam.every(Number.isFinite)) { camera.position.set(cam[0], cam[1], cam[2]); controls.target.set(cam[3], cam[4], cam[5]); controls.update(); }
@@ -205,7 +212,7 @@ export async function createStreetscape(canvas, ui = {}, place) {
   let rebuildTimer = 0; const later = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuild, 160); };
   const toggle = (id, label, title, key) => ({ id, label, title, on: () => state[key], set: v => { state[key] = v; later(); } });
   return {
-    renderer, scene, camera, controls, state, eras: [era], shots, data,
+    renderer, scene, camera, controls, state, eras: [era], shots, data, THREE: T, grow, transitions: ['grow', 'cut'], exportRoot: () => street.root,
     get stats() { return street.stats; },
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '霧' },
@@ -221,7 +228,7 @@ export async function createStreetscape(canvas, ui = {}, place) {
     ],
     toggles: [toggle('clay', '白模檢視', '所有建物與地面改成單一白色，方便看量體與光影', 'clay'), toggle('trees', '樹木', '行道樹與公園樹', 'trees'), toggle('props', '街道道具', '頂樓水塔、加蓋鐵皮屋、路燈', 'props')],
     actions: [
-      { label: '重擲推估高度', title: '沒有 OSM 高度的建物換一組推估樓層', run: () => { state.seed = (state.seed % 9999) + 1; rebuild(); status(`種子 #${state.seed}：已重擲 ${street.stats.guessed} 棟推估高度`); } },
+      { label: '重擲推估高度', title: '沒有 OSM 高度的建物換一組推估樓層', run: () => { state.seed = (state.seed % 9999) + 1; rebuild(true); status(`種子 #${state.seed}：已重擲 ${street.stats.guessed} 棟推估高度`); } },
       { label: '匯出 GLB', title: '下載目前街廓的 3D 模型，可帶進 Blender 搭景', run: exportGLB },
     ],
   };

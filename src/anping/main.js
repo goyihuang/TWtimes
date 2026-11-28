@@ -3,6 +3,7 @@ import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
+import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
 import { cloudTex, rng } from '../tainan/kit.js';
 import { ERAS, SHOTS, mmToFov } from './eras.js';
 import { buildEra, inPoly } from './world.js';
@@ -55,7 +56,15 @@ export async function createAnping(canvas, ui = {}) {
   const state = { era: 0, hour: 15.5, weather: 'clear', mm: 35, walk: false, night: 0, shot: 0 };
   let fade = 0, fadeTarget = 0, pendingEra = null;
   function applyEra(i) { eras.forEach((e, j) => e.group.visible = j === i); state.era = i; post.setGrade(ERAS[i].grade); climate(); ui.onEra?.(i); }
-  function setEra(i, animate = true) { i = Math.max(0, Math.min(ERAS.length - 1, i | 0)); if (!animate || i === state.era) { applyEra(i); return; } pendingEra = i; fadeTarget = 1; }
+  // 年代轉場（共用設定 TRANSITION：建物長出／淡出淡入／直接切換），鏡頭不動
+  const grow = createEraGrow(T);
+  function setEra(i, animate = true) {
+    i = Math.max(0, Math.min(ERAS.length - 1, i | 0));
+    if (!animate || i === state.era || TRANSITION.mode === 'cut') { grow.finish(); applyEra(i); return; }
+    if (TRANSITION.mode === 'fade') { grow.finish(); pendingEra = i; fadeTarget = 1; return; }
+    const from = eras[state.era].group; applyEra(i);
+    grow.start(from, eras[i].group, state.walk ? camera.position : controls.target);
+  }
 
   function climate() {
     const { v, elev } = sunDir(state.hour), w = state.weather;
@@ -127,7 +136,8 @@ export async function createAnping(canvas, ui = {}) {
     const dt = Math.min(0.05, clock.getDelta()); time += dt;
     if (state.walk) walkStep(dt); else controls.update();
     const focus = state.walk ? camera.position : controls.target; if (focus.distanceTo(lastFocus) > 40) { lastFocus.copy(focus); const { v } = sunDir(state.hour); const f = new T.Vector3(focus.x, 0, focus.z); sun.position.copy(v).multiplyScalar(600).add(f); sun.target.position.copy(f); }
-    if (fadeTarget !== fade) { fade += Math.sign(fadeTarget - fade) * Math.min(Math.abs(fadeTarget - fade), dt * 4); if (fade >= 1 && pendingEra !== null) { applyEra(pendingEra); pendingEra = null; fadeTarget = 0; } }
+    if (fadeTarget !== fade) { fade += Math.sign(fadeTarget - fade) * Math.min(Math.abs(fadeTarget - fade), dt * 2.4 / TRANSITION.seconds * 4); if (fade >= 1 && pendingEra !== null) { applyEra(pendingEra); pendingEra = null; fadeTarget = 0; } }
+    grow.update(dt);
     post.grade.uniforms.uFade.value = fade * 0.92; post.grade.uniforms.uTime.value = time;
     for (const m of eras[state.era].movers) m(dt, time);
     if (rain.visible) { const p = rainGeo.attributes.position.array; for (let i = 0; i < p.length; i += 6) { p[i + 1] -= dt * 26; p[i + 4] -= dt * 26; if (p[i + 1] < 0) { p[i + 1] += 60; p[i + 4] += 60; } } rainGeo.attributes.position.needsUpdate = true; rain.position.set(camera.position.x, 0, camera.position.z); }
@@ -136,9 +146,9 @@ export async function createAnping(canvas, ui = {}) {
   }
   renderer.setAnimationLoop(frame);
 
-  function snapshot() { post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
+  function snapshot() { grow.finish(); post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
   function compare(other) {
-    const cur = state.era; other = other ?? (cur === ERAS.length - 1 ? 0 : ERAS.length - 1);
+    grow.finish(); const cur = state.era; other = other ?? (cur === ERAS.length - 1 ? 0 : ERAS.length - 1);
     const fadeWas = post.grade.uniforms.uFade.value; post.grade.uniforms.uFade.value = 0;
     const a = snapshot(); applyEra(other); const b = snapshot(); applyEra(cur); post.grade.uniforms.uFade.value = fadeWas;
     const W = a.width, H = a.height, out = document.createElement('canvas'); out.width = W * 2 + 12; out.height = H + 64; const g = out.getContext('2d');
@@ -167,7 +177,8 @@ export async function createAnping(canvas, ui = {}) {
   status(osm ? `城堡與市鎮：成大疊圖描線、以外堡南牆校正｜現況：${osmData.source}（${osmData.fetched}）` : 'OSM 街廓未載入，現代年代只顯示平臺');
 
   return {
-    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state,
+    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state, THREE: T, grow,
+    transitions: ['grow', 'fade', 'cut'], exportRoot: () => eras[state.era].group,
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜可走上城堡平臺｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '海霧' },
     setEra, setShot, setFocal, compare, snapshot, shareURL,
