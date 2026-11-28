@@ -3,15 +3,12 @@
 import { mountScenePanel, showLoadError } from '../shared/scene-panel.js';
 import { setupModuleFrame } from '../shared/platform-frame.js';
 import { SOURCES } from './sources.js';
+import { findPlaceById } from '../shared/places.js';
 const el = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const q = new URLSearchParams(location.search);
-let place = null;
-try {
-  const reg = await fetch(new URL('data/scene-registry.json', document.baseURI)).then(r => r.json());
-  place = reg.scenes.find(s => s.id === (q.get('id') || (q.has('ll') ? '' : 'tainan-station'))) || null;
-} catch { }
+let place = await findPlaceById(q.get('id') || (q.has('ll') ? '' : 'tainan-station'));
 if (!place || !Number.isFinite(place.lat)) place = { id: null, name: q.get('name')?.slice(0, 24) || '', lat: 22.9971, lng: 120.2126 };
 document.body.classList.add('osm-platform', 'world-platform');
 
