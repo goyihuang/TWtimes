@@ -14,6 +14,7 @@
 //   選配：setFocal(mm) setWeather(key) weathers { key: 名稱 } setHour(h) toggleWalk() zoom(f) toggles [{ id, label, title?, on, set(on) }]
 //         extraLinks [{ label, href }]
 import './scene-panel.css';
+import { mountStudio } from './scene-tools.js';
 
 const el = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, k => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[k]));
@@ -32,6 +33,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
 <div class="sp-params" id="spParams" hidden></div>
 <div class="sp-toggles" id="spToggles" hidden></div>
 <div class="sp-links" id="spLinks" hidden></div>
+<div class="sp-studio" id="spStudio"></div>
 <details id="evidence" class="sp-evidence"><summary>重建依據與可信度</summary><table id="evTable"></table><p class="sp-note">A：${CONFIDENCE.A}　B：${CONFIDENCE.B}　C：${CONFIDENCE.C}</p></details>
 <p id="status" class="sp-status" role="status">載入中…</p>`;
 
@@ -45,7 +47,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
   const stage = el('stage');
   if (stage && !el('walkHint')) stage.insertAdjacentHTML('beforeend', '<div id="walkHint" hidden></div>');
 
-  let api = null;
+  let api = null, studio = null;
   const status = t => { el('status').textContent = t; };
   const renderEvidence = e => {
     el('evTable').innerHTML = (e.evidence || []).map(([k, c, s]) => `<tr><td>${esc(k)}</td><td class="c-${esc(c)}">${esc(c)}</td><td>${esc(s)}</td></tr>`).join('') || '<tr><td colspan="3">尚未整理</td></tr>';
@@ -60,6 +62,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
       if (!api.keepCaption) { set('viewYear', e.year); set('viewName', e.name); set('viewEnglish', e.en || en); set('modelInfo', e.story); }
       set('story', e.story);
       renderEvidence(e);
+      studio?.refresh();
     },
     onShot(i) {
       if (!api) return;
@@ -93,7 +96,7 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
     }
     if (a.setHour) {
       el('hour').value = a.state.hour; el('clock').textContent = fmtHour(a.state.hour);
-      el('hour').oninput = () => { a.setHour(+el('hour').value); el('clock').textContent = fmtHour(+el('hour').value); };
+      el('hour').oninput = () => { studio?.stopLapse(); a.setHour(+el('hour').value); el('clock').textContent = fmtHour(+el('hour').value); };
     }
     el('tnWalk').onclick = () => a.toggleWalk();
     // 畫面右下的「環繞／步行」與面板的「漫步」同步
@@ -125,13 +128,14 @@ export function mountScenePanel({ title, en, story = '', host = el('scenePanel')
       const b = document.createElement('button'); b.textContent = act.label; if (act.title) b.title = act.title; b.className = 'sp-action';
       b.onclick = () => act.run(); el('spToggles').append(b); el('spToggles').hidden = false;
     }
+    studio = mountStudio(el('spStudio'), a, { ui, status, title: title || el('viewName')?.textContent || '' });
     const links = el('spLinks'); links.hidden = !a.extraLinks?.length;
     links.innerHTML = (a.extraLinks || []).map(l => `<a href="${esc(l.href)}">${esc(l.label)}　↗</a>`).join('');
     // 共用框架按鈕（首頁原有場景保留自己的快門與縮放）
     const on = (id, fn) => { const n = el(id); if (n && a.frameButtons !== false) n.onclick = fn; };
     on('resetView', () => a.setShot(+el('shot').value));
     if (a.zoom) { on('plus', () => a.zoom(0.82)); on('minus', () => a.zoom(1.22)); }
-    on('shutter', () => { const c = a.snapshot(); window.saveScenePhoto(c, (el('viewYear')?.textContent || '') + ' · ' + (el('viewName')?.textContent || title)); });
+    on('shutter', () => { const c = window.cropToGuide(a.snapshot()); window.saveScenePhoto(c, (el('viewYear')?.textContent || '') + ' · ' + (el('viewName')?.textContent || title)); });
     on('full', () => document.fullscreenElement ? document.exitFullscreen() : el('viewer').requestFullscreen());
     ui.onEra(ui._pendingEra ?? a.state.era); ui.onShot(a.state.shot ?? 0); ui.onWalk(!!a.state.walk);
     const loading = el('loading'); if (loading) loading.hidden = true;

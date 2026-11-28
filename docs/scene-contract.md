@@ -32,6 +32,13 @@
   params: [{ id, label, min, max, step, unit, get(), set(v) }],   // 片場參數滑桿（例：現代街景的推估樓高、路寬）
   actions: [{ label, title?, run() }],                            // 一次性動作（例：重擲推估高度、匯出 GLB）
   walkHint: '漫步操作提示',
+  // 年代轉場與片場工具（src/shared/era-grow.js、scene-tools.js）
+  transitions: ['grow', 'fade', 'cut'],   // 支援的轉場方式；面板只列出這些
+  grow,                                   // createEraGrow() 的實例（拍照、白模、匯出前會先 finish）
+  scene, THREE,                           // 有這兩個就提供「白模檢視」
+  controls,                               // OrbitControls：提供「緩緩環繞」（或改給 setSpin(v)／spin）
+  exportRoot: () => object3D,             // 目前年代的根節點：提供「匯出 GLB」
+  redraw(),                               // 依需求重畫的引擎（app.js）用
   keepCaption: false,   // true：左下標題由引擎自己管（app.js）
   frameButtons: true,   // false：快門、縮放、重設、全螢幕保留引擎原本的處理（app.js）
 }
@@ -59,3 +66,27 @@ panel.bind(api);
 | 臺中 1935（已退場） | — | `taichung-1935.html#era=1935&t=&w=&v=`、`./#era=…` 轉到 `?place=station`（或 `river`）並帶 `era`、`t`、`w` |
 
 `shot` 從 0 起算（圓山沿用舊的 1 起算）。`cam` 存在時優先於 `shot`。
+
+## 年代轉場「建物長出來」（`src/shared/era-grow.js`）
+
+所有場景共用。只做動畫、不改模型：轉場期間把網格材質換成加了轉場著色器的複本，結束後換回原材質，所以結束畫面與直接切換完全相同。
+
+```js
+import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
+const grow = createEraGrow(THREE);            // 傳入場景用的 three（app.js 用舊版 window.THREE）
+// 切換年代：
+if (TRANSITION.mode === 'grow') { const from = oldGroup; showOnly(newGroup); grow.start(from, newGroup, controls.target); }
+// 每幀：grow.update(dt)；拍照／今昔並排前：grow.finish()
+```
+
+- 以鏡頭注視點為圓心，波紋向外推進；距離正規化後開根號，鏡頭前的建物有較長的時間慢慢長。
+- 高於地面 0.35 m 的部分：舊年代沉回地面，新年代從地面長高，沿每 3.2 m 亮一條金色樓層線。
+- 貼地的地面、道路、水面：兩年代互補溶解（同一點只出現一個年代，不會疊影）。
+- 陰影一起長（替換陰影深度材質）。線、點、精靈、自訂 ShaderMaterial 在中點直接切換。
+- 全站設定 `TRANSITION`（`mode`：grow／fade／cut，`seconds`）存在 localStorage `tw-transition-v1`，面板「年代轉場」可改；系統開啟「減少動態效果」時預設直接切換。
+- 圓山沿用自己的著色器（`src/yuanshan/materials.js`，最早的版本），只讀取 `TRANSITION` 的時間與直接切換。
+- 測試：`grow.hold = true` 凍結、`grow.seek(k)` 跳到進度 k，可逐格截圖。
+
+## 片場工具（`src/shared/scene-tools.js`）
+
+共用面板底部同一組，依場景 API 能力自動出現：年代轉場與轉場時間、構圖框（三分線、16:9、2.39:1、4:5、9:16、1:1；快門依比例裁切）、縮時（每 2 秒 1 小時）、緩緩環繞、白模檢視、匯出 GLB。場景自己已有同名功能（圓山的環繞、現代街景的白模與匯出）時不重複。

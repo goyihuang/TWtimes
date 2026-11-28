@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "fetch-osm": "node scripts/fetch-osm.mjs",
     "bake-osm": "node scripts/bake-osm.mjs",
-    "test": "node tests/atlas-search.test.mjs && node tests/switcher-streetscape.test.mjs && node tests/world-tiles.test.mjs",
+    "test": "node tests/atlas-search.test.mjs && node tests/switcher-streetscape.test.mjs && node tests/era-grow.test.mjs && node tests/world-tiles.test.mjs",
     "e2e-world": "node tests/world-e2e.mjs"
   },
   "dependencies": {

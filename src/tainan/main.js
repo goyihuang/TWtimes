@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Post } from '../yuanshan/post.js';
+import { createEraGrow, TRANSITION } from '../shared/era-grow.js';
 import { ERAS, SHOTS, mmToFov } from './eras.js';
 import { loadOSM } from './osm.js';
 import { buildEra, PLATFORMS } from './scenery.js';
@@ -136,10 +137,14 @@ export async function createTainan(canvas, ui = {}) {
     eras.forEach((e, j) => e.group.visible = j === i); state.era = i;
     post.setGrade(ERAS[i].grade); climate(); ui.onEra?.(i);
   }
+  // 年代轉場（共用設定 TRANSITION：建物長出／淡出淡入／直接切換），鏡頭不動
+  const grow = createEraGrow(T);
   function setEra(i, animate = true) {
     i = Math.max(0, Math.min(ERAS.length - 1, i | 0));
-    if (!animate || i === state.era) { applyEra(i); return; }
-    pendingEra = i; fadeTarget = 1;
+    if (!animate || i === state.era || TRANSITION.mode === 'cut') { grow.finish(); applyEra(i); return; }
+    if (TRANSITION.mode === 'fade') { grow.finish(); pendingEra = i; fadeTarget = 1; return; }
+    const from = eras[state.era].group; applyEra(i);
+    grow.start(from, eras[i].group, state.walk ? camera.position : controls.target);
   }
 
   function climate() {
@@ -230,7 +235,8 @@ export async function createTainan(canvas, ui = {}) {
     const dt = Math.min(0.05, clock.getDelta()); time += dt;
     if (state.walk) walkStep(dt); else controls.update();
     // 年代轉場：淡出 → 切換 → 淡入（鏡頭不動）
-    if (fadeTarget !== fade) { fade += Math.sign(fadeTarget - fade) * Math.min(Math.abs(fadeTarget - fade), dt * 4.5); if (fade >= 1 && pendingEra !== null) { applyEra(pendingEra); pendingEra = null; fadeTarget = 0; } }
+    if (fadeTarget !== fade) { fade += Math.sign(fadeTarget - fade) * Math.min(Math.abs(fadeTarget - fade), dt * 2.4 / TRANSITION.seconds * 4.5); if (fade >= 1 && pendingEra !== null) { applyEra(pendingEra); pendingEra = null; fadeTarget = 0; } }
+    grow.update(dt);
     post.grade.uniforms.uFade.value = fade * 0.92; post.grade.uniforms.uTime.value = time;
     for (const m of eras[state.era].movers) m(dt);
     if (rain.visible) { const p = rainGeo.attributes.position.array; for (let i = 0; i < p.length; i += 6) { p[i + 1] -= dt * 26; p[i + 4] -= dt * 26; if (p[i + 1] < 0) { p[i + 1] += 50; p[i + 4] += 50; } } rainGeo.attributes.position.needsUpdate = true; rain.position.set(camera.position.x, 0, camera.position.z); }
@@ -240,9 +246,9 @@ export async function createTainan(canvas, ui = {}) {
   renderer.setAnimationLoop(frame);
 
   // ── 拍攝、今昔並排、分享 ──
-  function snapshot() { post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
+  function snapshot() { grow.finish(); post.composer.render(0); const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height; c.getContext('2d').drawImage(canvas, 0, 0); return c; }
   function compare(other) {
-    const cur = state.era; other = other ?? (cur >= 3 ? 1 : 3);
+    grow.finish(); const cur = state.era; other = other ?? (cur >= 3 ? 1 : 3);
     const fadeWas = post.grade.uniforms.uFade.value; post.grade.uniforms.uFade.value = 0;
     const a = snapshot(); applyEra(other); const b = snapshot(); applyEra(cur); post.grade.uniforms.uFade.value = fadeWas;
     const W = a.width, H = a.height, out = document.createElement('canvas'); out.width = W * 2 + 12; out.height = H + 64; const g = out.getContext('2d');
@@ -272,7 +278,8 @@ export async function createTainan(canvas, ui = {}) {
   status(warn.length ? warn.join('；') : `站房：Blender 重建（依館藏舊照）｜街廓：${osm?.source || 'OSM'}（${osm?.fetched || ''}）`);
 
   return {
-    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state,
+    renderer, scene, camera, controls, post, eras: ERAS, shots: SHOTS, state, THREE: T, grow,
+    transitions: ['grow', 'fade', 'cut'], exportRoot: () => eras[state.era].group,
     walkHint: 'W A S D／方向鍵移動・拖曳轉向・Shift 快走｜手機：左半邊拖曳前進、右半邊轉向',
     weathers: { clear: '晴天', cloudy: '多雲', rain: '雨天', fog: '晨霧' },
     setEra, setShot, setFocal, compare, snapshot, shareURL,

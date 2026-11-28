@@ -38,3 +38,14 @@
 @media(max-width:620px){.scene-panel-ready .control-bar{flex-wrap:wrap}.scene-panel-ready .sp-eras{flex:1 1 100%;order:2}.scene-panel-ready .shutter{margin-left:auto}}
 .sp-params{display:grid;gap:2px;padding:6px 0 2px;border-top:1px dashed var(--rule)}.sp-params[hidden]{display:none}
 .sp-toggles .sp-action{border-style:dashed}
+/* 片場工具（src/shared/scene-tools.js）：所有場景同一組 */
+.sp-studio{display:grid;gap:5px;padding:7px 0 2px;border-top:1px dashed var(--rule)}
+.sp-studio-h{font:600 .74rem var(--sans);letter-spacing:.12em;color:var(--muted);margin:0}
+/* 構圖框：框外壓暗、三分線；不進入照片（快門依比例裁切） */
+#frameGuide{position:absolute;inset:0;pointer-events:none;z-index:2}
+#frameGuide[hidden]{display:none}
+#frameGuide::before{content:"";position:absolute;left:var(--gx);top:var(--gy);width:var(--gw);height:var(--gh);box-shadow:0 0 0 100vmax #0a0f0c8c;outline:1px solid #f3ead6aa;
+  background:linear-gradient(90deg,transparent calc(33.33% - .5px),#f3ead666 calc(33.33% - .5px) calc(33.33% + .5px),transparent 0,transparent calc(66.66% - .5px),#f3ead666 calc(66.66% - .5px) calc(66.66% + .5px),transparent 0),
+  linear-gradient(transparent calc(33.33% - .5px),#f3ead666 calc(33.33% - .5px) calc(33.33% + .5px),transparent 0,transparent calc(66.66% - .5px),#f3ead666 calc(66.66% - .5px) calc(66.66% + .5px),transparent 0)}
+#frameGuide::after{content:attr(data-label);position:absolute;left:calc(var(--gx) + 8px);top:calc(var(--gy) + 6px);font:600 11px var(--sans);letter-spacing:.08em;color:#f3ead6cc}
+.clean-view #frameGuide::after{opacity:0}
